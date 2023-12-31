@@ -110,6 +110,6 @@
 (library
  (name libsail)
  (public_name libsail)
- (libraries lem linksem pprint dune-site yojson menhirLib)
+ (libraries lem linksem pprint dune-site yojson menhirLib z3)
  (instrumentation
   (backend bisect_ppx)))

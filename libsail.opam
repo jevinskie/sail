@@ -43,8 +43,6 @@ depends: [
   "pprint" {>= "20220103"}
   "odoc" {with-doc}
 ]
-depopts: [ "z3" ]
-conflicts: [ "z3" {< "4.12"} ]
 build: [
   ["dune" "subst"] {dev}
   [
