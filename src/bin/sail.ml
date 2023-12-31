@@ -277,7 +277,7 @@ let rec options =
       );
       ( "-smt_solver",
         Arg.String (fun s -> Constraint.set_solver (String.trim s)),
-        "<solver> choose SMT solver. Supported solvers are z3 (default), alt-ergo, cvc4, mathsat, vampire and yices."
+        "<solver> choose SMT solver. Supported solvers are z3-lib (default), z3, alt-ergo, cvc4, mathsat, vampire and yices."
       );
       ( "-smt_linearize",
         Arg.Set Type_env.opt_smt_linearize,

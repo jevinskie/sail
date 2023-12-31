@@ -92,6 +92,17 @@ let mathsat_solver =
     uninterpret_power = true;
   }
 
+let z3_lib_solver =
+  {
+    command = "z3 -t:1000 -T:10";
+    (* Using push and pop is much faster, I believe because
+        incremental mode uses a different solver. *)
+    header = "(push)\n";
+    footer = "(pop)\n";
+    negative_literals = true;
+    uninterpret_power = false;
+  }
+
 let z3_solver =
   {
     command = "z3 -t:1000 -T:10";
@@ -125,9 +136,10 @@ let vampire_solver =
 let alt_ergo_solver =
   { command = "alt-ergo"; header = ""; footer = ""; negative_literals = false; uninterpret_power = true }
 
-let opt_solver = ref z3_solver
+let opt_solver = ref z3_lib_solver
 
 let set_solver = function
+  | "z3-lib" -> opt_solver := z3_lib_solver
   | "z3" -> opt_solver := z3_solver
   | "alt-ergo" -> opt_solver := alt_ergo_solver
   | "cvc4" -> opt_solver := cvc4_solver

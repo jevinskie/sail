@@ -1829,7 +1829,7 @@ let codegen_def' ctx = function
       if ctx_is_extern id ctx then empty
       else if is_stack_ctyp ret_ctyp then
         string
-          (Printf.sprintf "%s%s %s(%s%s);" (static ()) (sgen_ctyp ret_ctyp) (sgen_function_id id) (extra_params ())
+          (Printf.sprintf "%s%s %s(%s%s);" (if (((sgen_function_id id) == "z__ListConfig") || ((sgen_function_id id) == "z__SetConfig")) then "" else static ()) (sgen_ctyp ret_ctyp) (sgen_function_id id) (extra_params ())
              (Util.string_of_list ", " sgen_const_ctyp arg_ctyps)
           )
       else
