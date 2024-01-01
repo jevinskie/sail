@@ -74,6 +74,7 @@ type target = {
   name : string;
   options : (Arg.key * Arg.spec * Arg.doc) list;
   pre_parse_hook : unit -> unit;
+  pre_descatter_hook : (tannot ast -> Env.t -> unit);
   pre_rewrites_hook : tannot ast -> Effects.side_effect_info -> Env.t -> unit;
   rewrites : (string * Rewrites.rewriter_arg list) list;
   action : Yojson.Basic.t option -> string -> string option -> tannot ast -> Effects.side_effect_info -> Env.t -> unit;
@@ -83,6 +84,8 @@ type target = {
 let name tgt = tgt.name
 
 let run_pre_parse_hook tgt = tgt.pre_parse_hook
+
+let run_pre_descatter_hook tgt = tgt.pre_descatter_hook
 
 let run_pre_rewrites_hook tgt = tgt.pre_rewrites_hook
 
@@ -97,8 +100,7 @@ let targets = ref StringMap.empty
 
 let the_target = ref None
 
-let register ~name ?flag ?description:desc ?(options = []) ?(pre_parse_hook = fun () -> ())
-    ?(pre_rewrites_hook = fun _ _ _ -> ()) ?(rewrites = []) ?(asserts_termination = false) action =
+let register ~name ?flag ?description:desc ?(options = []) ?(pre_parse_hook = fun () -> ()) ?(pre_descatter_hook = fun _ _ -> ()) ?(pre_rewrites_hook = fun _ _ _ -> ()) ?(rewrites = []) ?(asserts_termination = false) action =
   let set_target () =
     match !the_target with
     | None -> the_target := Some name
@@ -113,6 +115,7 @@ let register ~name ?flag ?description:desc ?(options = []) ?(pre_parse_hook = fu
       name;
       options = ("-" ^ flag, Arg.Unit set_target, desc) :: options;
       pre_parse_hook;
+      pre_descatter_hook;
       pre_rewrites_hook;
       rewrites;
       action;
