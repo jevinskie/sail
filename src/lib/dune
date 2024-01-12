@@ -111,5 +111,6 @@
  (name libsail)
  (public_name libsail)
  (libraries lem linksem pprint dune-site yojson menhirLib z3)
+ (preprocess (pps ppx_deriving.show))
  (instrumentation
   (backend bisect_ppx)))

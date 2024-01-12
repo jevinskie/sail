@@ -13,6 +13,7 @@
  (public_name sail)
  (package sail)
  (link_flags -linkall)
+ (preprocess (pps ppx_deriving.show))
  (libraries libsail linenoise dynlink))
 
 ; For legacy reasons install all the Sail files in lib as part of this package

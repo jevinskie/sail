@@ -142,4 +142,5 @@ http://www.cl.cam.ac.uk/~pes20/sail/.
     (sail_latex_backend (and (= :version) :post))
     (sail_doc_backend (and (= :version) :post))
     (sail_output (and (= :version) :post))
-    (linenoise (>= 1.1.0))))
+    (linenoise (>= 1.1.0))
+    (ppx_deriving (>= 5.2.1))))

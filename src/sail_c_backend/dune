@@ -2,6 +2,7 @@
  (name sail_plugin_c)
  (modes
   (native plugin))
+ (preprocess (pps ppx_deriving.show))
  (libraries libsail))
 
 (install
