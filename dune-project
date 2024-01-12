@@ -58,6 +58,7 @@ http://www.cl.cam.ac.uk/~pes20/sail/.
     conf-zlib
     (yojson (>= 1.6.0))
     (pprint (>= 20220103))
+    (z3 (>= 4.12.4))
     (ppx_deriving (>= 5.2.1))
     (ppx_import (>= 1.10.0))))
 
@@ -73,6 +74,7 @@ http://www.cl.cam.ac.uk/~pes20/sail/.
   (synopsis "Sail to C translation")
   (depends
     (libsail (= :version))
+    (z3 (>= 4.12.4))
     (ppx_deriving (>= 5.2.1))
     (ppx_import (>= 1.10.0))))
 
@@ -147,5 +149,6 @@ http://www.cl.cam.ac.uk/~pes20/sail/.
     (sail_doc_backend (and (= :version) :post))
     (sail_output (and (= :version) :post))
     (linenoise (>= 1.1.0))
+    (z3 (>= 4.12.4))
     (ppx_deriving (>= 5.2.1))
     (ppx_import (>= 1.10.0))))

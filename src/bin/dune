@@ -14,7 +14,7 @@
  (package sail)
  (link_flags -linkall)
  (preprocess (staged_pps ppx_import ppx_deriving.show))
- (libraries libsail linenoise dynlink ppx_import ppx_deriving))
+ (libraries libsail linenoise dynlink z3 ppx_import ppx_deriving))
 
 ; For legacy reasons install all the Sail files in lib as part of this package
 

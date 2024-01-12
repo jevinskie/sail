@@ -3,7 +3,7 @@
  (modes
   (native plugin))
  (preprocess (staged_pps ppx_import ppx_deriving.show))
- (libraries libsail ppx_import ppx_deriving))
+ (libraries libsail z3 ppx_import ppx_deriving))
 
 (install
  (section
