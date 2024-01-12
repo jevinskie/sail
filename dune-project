@@ -57,7 +57,9 @@ http://www.cl.cam.ac.uk/~pes20/sail/.
     conf-gmp
     conf-zlib
     (yojson (>= 1.6.0))
-    (pprint (>= 20220103))))
+    (pprint (>= 20220103))
+    (ppx_deriving (>= 5.2.1))
+    (ppx_import (>= 1.10.0))))
 
 (package
   (name sail_ocaml_backend)
@@ -70,7 +72,9 @@ http://www.cl.cam.ac.uk/~pes20/sail/.
   (name sail_c_backend)
   (synopsis "Sail to C translation")
   (depends
-    (libsail (= :version))))
+    (libsail (= :version))
+    (ppx_deriving (>= 5.2.1))
+    (ppx_import (>= 1.10.0))))
 
 (package
   (name sail_smt_backend)
@@ -143,4 +147,5 @@ http://www.cl.cam.ac.uk/~pes20/sail/.
     (sail_doc_backend (and (= :version) :post))
     (sail_output (and (= :version) :post))
     (linenoise (>= 1.1.0))
-    (ppx_deriving (>= 5.2.1))))
+    (ppx_deriving (>= 5.2.1))
+    (ppx_import (>= 1.10.0))))

@@ -21,6 +21,8 @@ bug-reports: "https://github.com/rems-project/sail/issues"
 depends: [
   "dune" {>= "3.0"}
   "libsail" {= version}
+  "ppx_deriving" {>= "5.2.1"}
+  "ppx_import" {>= "1.10.0"}
   "odoc" {with-doc}
 ]
 build: [

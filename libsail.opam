@@ -41,6 +41,8 @@ depends: [
   "conf-zlib"
   "yojson" {>= "1.6.0"}
   "pprint" {>= "20220103"}
+  "ppx_deriving" {>= "5.2.1"}
+  "ppx_import" {>= "1.10.0"}
   "odoc" {with-doc}
 ]
 build: [
