@@ -70,21 +70,27 @@
 module Big_int = Nat_big_num
 
 type text = string
+[@@deriving show]
+type position = [%import: Lexing.position]
+[@@deriving show]
 
 type l =
   | Unknown
   | Unique of int * l
   | Generated of l
   | Hint of string * l * l
-  | Range of Lexing.position * Lexing.position
+  | Range of position * position
+  [@@deriving show]
 
 type 'a annot = l * 'a
 
 type extern = { pure : bool; bindings : (string * string) list }
+[@@deriving show]
 
 exception Parse_error_locn of l * string
 
 type x = text (* identifier *)
+[@@deriving show]
 type ix = text (* infix identifier *)
 
 type kind_aux =
@@ -93,20 +99,27 @@ type kind_aux =
   | K_int (* kind of natural number size expressions *)
   | K_order (* kind of vector order specifications *)
   | K_bool (* kind of constraints *)
+[@@deriving show]
 
 type kind = K_aux of kind_aux * l
+[@@deriving show]
 
 type kid_aux = (* identifiers with kind, ticked to differentiate from program variables *)
   | Var of x
+[@@deriving show]
 
 type id_aux = (* Identifier *)
   | Id of x | Operator of x (* remove infix status *)
+[@@deriving show]
 
 type kid = Kid_aux of kid_aux * l
+[@@deriving show]
 
 type id = Id_aux of id_aux * l
+[@@deriving show]
 
 type 'a infix_token = IT_primary of 'a | IT_op of id | IT_prefix of id
+[@@deriving show]
 
 type lit_aux =
   | (* Literal constant *)
@@ -121,8 +134,10 @@ type lit_aux =
   | L_undef (* undefined value *)
   | L_string of string (* string constant *)
   | L_real of string
+[@@deriving show]
 
 type lit = L_aux of lit_aux * l
+[@@deriving show]
 
 type atyp_aux =
   (* expressions of all kinds, to be translated to types, nats, orders, and effects after parsing *)
@@ -136,7 +151,7 @@ type atyp_aux =
   | ATyp_minus of atyp * atyp (* subtraction *)
   | ATyp_exp of atyp (* exponential *)
   | ATyp_neg of atyp (* Internal (but not M as I want a datatype constructor) negative nexp *)
-  | ATyp_infix of (atyp infix_token * Lexing.position * Lexing.position) list
+  | ATyp_infix of (atyp infix_token * position * position) list
   | ATyp_inc (* increasing *)
   | ATyp_dec (* decreasing *)
   | ATyp_set of id list (* effect set *)
@@ -149,6 +164,7 @@ type atyp_aux =
   | ATyp_parens of atyp
 
 and atyp = ATyp_aux of atyp_aux * l
+[@@deriving show]
 
 and kinded_id_aux =
   (* optionally kind-annotated identifier *)
@@ -160,20 +176,26 @@ type quant_item_aux =
   (* Either a kinded identifier or a nexp constraint for a typquant *)
   | QI_id of kinded_id (* An optionally kinded identifier *)
   | QI_constraint of atyp (* A constraint for this type *)
+[@@deriving show]
 
-type quant_item = QI_aux of quant_item_aux * l
+  type quant_item = QI_aux of quant_item_aux * l
+[@@deriving show]
 
 type typquant_aux =
   (* type quantifiers and constraints *)
   | TypQ_tq of quant_item list
   | TypQ_no_forall (* sugar, omitting quantifier and constraints *)
+[@@deriving show]
 
 type typquant = TypQ_aux of typquant_aux * l
+[@@deriving show]
 
 type typschm_aux = (* type scheme *)
   | TypSchm_ts of typquant * atyp
+[@@deriving show]
 
 type typschm = TypSchm_aux of typschm_aux * l
+[@@deriving show]
 
 type pat_aux =
   (* Pattern *)
@@ -192,8 +214,10 @@ type pat_aux =
   | P_string_append of pat list (* string append pattern, x ^^ y *)
   | P_struct of fpat list (* struct pattern *)
   | P_attribute of string * string * pat
+[@@deriving show]
 
 and pat = P_aux of pat_aux * l
+[@@deriving show]
 
 and fpat_aux = (* Field pattern *)
   | FP_field of id * pat | FP_wild
@@ -201,8 +225,10 @@ and fpat_aux = (* Field pattern *)
 and fpat = FP_aux of fpat_aux * l
 
 type loop = While | Until
+[@@deriving show]
 
 type if_loc = { if_loc : l; then_loc : l; else_loc : l option }
+[@@deriving show]
 
 type measure_aux = (* optional termination measure for a loop *)
   | Measure_none | Measure_some of exp
@@ -219,7 +245,7 @@ and exp_aux =
   | E_typ of atyp * exp (* cast *)
   | E_app of id * exp list (* function application *)
   | E_app_infix of exp * id * exp (* infix function application *)
-  | E_infix of (exp infix_token * Lexing.position * Lexing.position) list
+  | E_infix of (exp infix_token * position * position) list
   | E_tuple of exp list (* tuple *)
   | E_if of exp * exp * exp * if_loc (* conditional *)
   | E_loop of loop * measure * exp * exp
@@ -264,6 +290,7 @@ and pexp_aux = (* Pattern match *)
   | Pat_exp of pat * exp | Pat_when of pat * exp * exp
 
 and pexp = Pat_aux of pexp_aux * l
+[@@deriving show]
 
 and letbind_aux = (* Let binding *)
   | LB_val of pat * exp (* value binding, implicit type (pat must be total) *)
@@ -274,22 +301,28 @@ type tannot_opt_aux =
   | (* Optional type annotation for functions *)
     Typ_annot_opt_none
   | Typ_annot_opt_some of typquant * atyp
+[@@deriving show]
 
 type typschm_opt_aux = TypSchm_opt_none | TypSchm_opt_some of typschm
+[@@deriving show]
 
 type typschm_opt = TypSchm_opt_aux of typschm_opt_aux * l
+[@@deriving show]
 
 type effect_opt_aux =
   | (* Optional effect annotation for functions *)
     Effect_opt_none (* sugar for empty effect set *)
   | Effect_opt_effect of atyp
+[@@deriving show]
 
 type rec_opt_aux =
   | (* Optional recursive annotation for functions *)
     Rec_none (* no termination measure *)
   | Rec_measure of pat * exp (* recursive with termination measure *)
+[@@deriving show]
 
 type funcl = FCL_aux of funcl_aux * l
+[@@deriving show]
 
 and funcl_aux =
   (* Function clause *)
@@ -297,8 +330,10 @@ and funcl_aux =
   | FCL_attribute of string * string * funcl
   | FCL_doc of string * funcl
   | FCL_funcl of id * pexp
+[@@deriving show]
 
 type type_union = Tu_aux of type_union_aux * l
+[@@deriving show]
 
 and type_union_aux =
   (* Type union constructors *)
@@ -307,31 +342,40 @@ and type_union_aux =
   | Tu_doc of string * type_union
   | Tu_ty_id of atyp * id
   | Tu_ty_anon_rec of (atyp * id) list * id
+[@@deriving show]
 
 type tannot_opt = Typ_annot_opt_aux of tannot_opt_aux * l
+[@@deriving show]
 
 type effect_opt = Effect_opt_aux of effect_opt_aux * l
+[@@deriving show]
 
 type rec_opt = Rec_aux of rec_opt_aux * l
+[@@deriving show]
 
 type subst_aux =
   (* instantiation substitution *)
   | IS_typ of kid * atyp (* instantiate a type variable with a type *)
   | IS_id of id * id (* instantiate an identifier with another identifier *)
+[@@deriving show]
 
 type subst = IS_aux of subst_aux * l
+[@@deriving show]
 
 type index_range_aux =
   (* index specification, for bitfields in register types *)
   | BF_single of atyp (* single index *)
   | BF_range of atyp * atyp (* index range *)
   | BF_concat of index_range * index_range (* concatenation of index ranges *)
+[@@deriving show]
 
 and index_range = BF_aux of index_range_aux * l
+[@@deriving show]
 
 type default_typing_spec_aux =
   (* Default kinding or typing assumption, and default order for literal vectors and vector shorthands *)
   | DT_order of kind * atyp
+[@@deriving show]
 
 type mpat_aux =
   (* Mapping pattern. Mostly the same as normal patterns but only constructible parts *)
@@ -350,12 +394,16 @@ type mpat_aux =
   | MP_struct of (id * mpat) list
 
 and mpat = MP_aux of mpat_aux * l
+[@@deriving show]
 
 type mpexp_aux = MPat_pat of mpat | MPat_when of mpat * exp
+[@@deriving show]
 
 type mpexp = MPat_aux of mpexp_aux * l
+[@@deriving show]
 
 type mapcl = MCL_aux of mapcl_aux * l
+[@@deriving show]
 
 and mapcl_aux =
   (* mapping clause (bidirectional pattern-match) *)
@@ -364,20 +412,26 @@ and mapcl_aux =
   | MCL_bidir of mpexp * mpexp
   | MCL_forwards of mpexp * exp
   | MCL_backwards of mpexp * exp
+[@@deriving show]
 
 type mapdef_aux =
   (* mapping definition (bidirectional pattern-match function) *)
   | MD_mapping of id * typschm_opt * mapcl list
+[@@deriving show]
 
 type mapdef = MD_aux of mapdef_aux * l
+[@@deriving show]
 
 type outcome_spec_aux = (* outcome declaration *)
   | OV_outcome of id * typschm * kinded_id list
+[@@deriving show]
 
 type outcome_spec = OV_aux of outcome_spec_aux * l
+[@@deriving show]
 
 type fundef_aux = (* Function definition *)
   | FD_function of rec_opt * tannot_opt * effect_opt * funcl list
+[@@deriving show]
 
 type type_def_aux =
   (* Type definition body *)
@@ -386,12 +440,15 @@ type type_def_aux =
   | TD_variant of id * typquant * type_union list (* union type definition *)
   | TD_enum of id * (id * atyp) list * (id * exp option) list (* enumeration type definition *)
   | TD_bitfield of id * atyp * (id * index_range) list (* register mutable bitfield type definition *)
+[@@deriving show]
 
 type val_spec_aux = (* Value type specification *)
   | VS_val_spec of typschm * id * extern option
+[@@deriving show]
 
 type dec_spec_aux = (* Register declarations *)
   | DEC_reg of atyp * id * exp option
+[@@deriving show]
 
 type scattered_def_aux =
   (* Function and type union definitions that can be spread across
@@ -405,24 +462,34 @@ type scattered_def_aux =
   | SD_mapping of id * tannot_opt
   | SD_mapcl of id * mapcl
   | SD_end of id (* scattered definition end *)
+[@@deriving show]
 
 type default_typing_spec = DT_aux of default_typing_spec_aux * l
+[@@deriving show]
 
 type fundef = FD_aux of fundef_aux * l
+[@@deriving show]
 
 type type_def = TD_aux of type_def_aux * l
+[@@deriving show]
 
 type val_spec = VS_aux of val_spec_aux * l
+[@@deriving show]
 
 type dec_spec = DEC_aux of dec_spec_aux * l
+[@@deriving show]
 
 type loop_measure = Loop of loop * exp
+[@@deriving show]
 
 type scattered_def = SD_aux of scattered_def_aux * l
+[@@deriving show]
 
 type prec = Infix | InfixL | InfixR
+[@@deriving show]
 
 type fixity_token = prec * Big_int.num * string
+[@@deriving show]
 
 type def_aux =
   (* Top-level definition *)
@@ -446,6 +513,7 @@ type def_aux =
   | DEF_attribute of string * string * def
   | DEF_doc of string * def
   | DEF_internal_mutrec of fundef list
+  [@@deriving show]
 
 and def = DEF_aux of def_aux * l
 
