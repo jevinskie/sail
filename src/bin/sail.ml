@@ -441,6 +441,8 @@ let run_sail (config : Yojson.Basic.t option) tgt =
   Reporting.suppressed_warning_info ();
   Reporting.opt_warnings := false;
 
+  Target.run_pre_descatter_hook tgt ast env;
+
   Target.run_pre_rewrites_hook tgt ast effect_info env;
   let ast, effect_info, env = Rewrites.rewrite effect_info env (Target.rewrites tgt) ast in
 

@@ -85,7 +85,9 @@ let name tgt = tgt.name
 
 let run_pre_parse_hook tgt = tgt.pre_parse_hook
 
-let run_pre_descatter_hook tgt = tgt.pre_descatter_hook
+let run_pre_descatter_hook tgt =
+  print_endline "in let run_pre_descatter_hook";
+  tgt.pre_descatter_hook
 
 let run_pre_rewrites_hook tgt = tgt.pre_rewrites_hook
 

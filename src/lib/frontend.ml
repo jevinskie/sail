@@ -177,6 +177,7 @@ let rewrite_ast_initial effect_info env =
     [("initial", fun effect_info env ast -> (Rewriter.rewrite_ast ast, effect_info, env))]
 
 let descatter effect_info type_envs ast =
+  print_endline "in let descatter";
   let ast = Scattered.descatter ast in
   let ast, _, _ = rewrite_ast_initial effect_info type_envs ast in
   (* Recheck after descattering so that the internal type environments
