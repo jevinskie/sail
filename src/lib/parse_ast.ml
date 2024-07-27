@@ -71,6 +71,7 @@ module Big_int = Nat_big_num
 
 type text = string
 [@@deriving show]
+
 type position = [%import: Lexing.position]
 [@@deriving show]
 
@@ -80,9 +81,10 @@ type l =
   | Generated of l
   | Hint of string * l * l
   | Range of position * position
-  [@@deriving show]
+[@@deriving show]
 
 type 'a annot = l * 'a
+[@@deriving show]
 
 type extern = { pure : bool; bindings : (string * string) list }
 [@@deriving show]
@@ -92,6 +94,7 @@ exception Parse_error_locn of l * string
 type x = text (* identifier *)
 [@@deriving show]
 type ix = text (* infix identifier *)
+[@@deriving show]
 
 type kind_aux =
   | (* base kind *)
@@ -162,6 +165,7 @@ type atyp_aux =
   | ATyp_app of id * atyp list (* type constructor application *)
   | ATyp_exist of kinded_id list * atyp * atyp
   | ATyp_parens of atyp
+[@@deriving show]
 
 and atyp = ATyp_aux of atyp_aux * l
 [@@deriving show]
@@ -169,8 +173,10 @@ and atyp = ATyp_aux of atyp_aux * l
 and kinded_id_aux =
   (* optionally kind-annotated identifier *)
   | KOpt_kind of string option * kid list * kind option (* kind-annotated variable *)
+[@@deriving show]
 
 and kinded_id = KOpt_aux of kinded_id_aux * l
+[@@deriving show]
 
 type quant_item_aux =
   (* Either a kinded identifier or a nexp constraint for a typquant *)
@@ -221,8 +227,10 @@ and pat = P_aux of pat_aux * l
 
 and fpat_aux = (* Field pattern *)
   | FP_field of id * pat | FP_wild
+[@@deriving show]
 
 and fpat = FP_aux of fpat_aux * l
+[@@deriving show]
 
 type loop = While | Until
 [@@deriving show]
@@ -232,8 +240,10 @@ type if_loc = { if_loc : l; then_loc : l; else_loc : l option }
 
 type measure_aux = (* optional termination measure for a loop *)
   | Measure_none | Measure_some of exp
+[@@deriving show]
 
 and measure = Measure_aux of measure_aux * l
+[@@deriving show]
 
 and exp_aux =
   (* Expression *)
@@ -276,26 +286,33 @@ and exp_aux =
   | E_internal_plet of pat * exp * exp
   | E_internal_return of exp
   | E_internal_assume of atyp * exp
+[@@deriving show]
 
 and exp = E_aux of exp_aux * l
+[@@deriving show]
 
 and opt_default_aux =
   | (* Optional default value for indexed vectors, to define a default value for any unspecified positions in a sparse map *)
     Def_val_empty
   | Def_val_dec of exp
+[@@deriving show]
 
 and opt_default = Def_val_aux of opt_default_aux * l
+[@@deriving show]
 
 and pexp_aux = (* Pattern match *)
   | Pat_exp of pat * exp | Pat_when of pat * exp * exp
+[@@deriving show]
 
 and pexp = Pat_aux of pexp_aux * l
 [@@deriving show]
 
 and letbind_aux = (* Let binding *)
   | LB_val of pat * exp (* value binding, implicit type (pat must be total) *)
+[@@deriving show]
 
 and letbind = LB_aux of letbind_aux * l
+[@@deriving show]
 
 type tannot_opt_aux =
   | (* Optional type annotation for functions *)
@@ -392,6 +409,7 @@ type mpat_aux =
   | MP_typ of mpat * atyp
   | MP_as of mpat * id
   | MP_struct of (id * mpat) list
+[@@deriving show]
 
 and mpat = MP_aux of mpat_aux * l
 [@@deriving show]
@@ -513,9 +531,10 @@ type def_aux =
   | DEF_attribute of string * string * def
   | DEF_doc of string * def
   | DEF_internal_mutrec of fundef list
-  [@@deriving show]
+[@@deriving show]
 
 and def = DEF_aux of def_aux * l
+[@@deriving show]
 
 type lexp_aux =
   (* lvalue expression, can't occur out of the parser *)
@@ -525,8 +544,11 @@ type lexp_aux =
   | LE_vector_range of lexp * exp * exp (* subvector *)
   | LE_vector_concat of lexp list
   | LE_field of lexp * id (* struct field *)
+[@@deriving show]
 
 and lexp = LE_aux of lexp_aux * l
+[@@deriving show]
 
 type defs = (* Definition sequence *)
   | Defs of (string * def list) list
+[@@deriving show]
