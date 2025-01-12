@@ -132,33 +132,33 @@ struct AddressDescriptor = {
 
 enum PrefetchHint = {Prefetch_READ, Prefetch_WRITE, Prefetch_EXEC}
 
-val ASR_C : forall 'N 'S, 'N >= 1 & 'S >= 1. (bits('N),int('S)) -> (bits('N), bit) effect {escape}
-val LSL_C : forall 'N 'S, 'N >= 0 & 'S >= 1. (bits('N),int('S)) -> (bits('N), bit) effect pure
-val LSR_C : forall 'N 'S, 'N >= 1 & 'S >= 1. (bits('N),int('S)) -> (bits('N), bit) effect pure
-val ROR_C : forall 'N 'S, 'N >= 1 & 'S != 0. (bits('N),int('S)) -> (bits('N), bit) effect pure
-val IsZero : forall 'N, 'N >=0. bits('N) -> boolean effect pure
-val Replicate : forall 'N 'M, 'N >='M & 'M >=0. (implicit('N),bits('M)) -> bits('N) effect {escape}
-val SignExtend : forall 'N 'M, 'N > 'M & 'M >= 1. (implicit('N),bits('M)) -> bits('N) effect {escape}
-val ZeroExtend : forall 'N 'M, 'N >= 'M & 'M >= 0. (implicit('N),bits('M)) -> bits('N) effect pure
-val Zeros : forall 'N, 'N >=0. implicit('N) -> bits('N) effect pure
-val Ones : forall 'N, 'N >=1. implicit('N) -> bits('N) effect {escape}
-/* val UInt : forall Nat 'N, Nat 'M, 'M = 2**'N. bits('N) -> [|'M + -1|] effect pure */
-val UInt : forall 'N, 'N >=0 . bits('N) -> range(0, 2 ^ 'N + -1) effect {escape}
-/* val UInt : forall 'N 'M, 'N >=0 & 'M >= 0. bits('N) -> Int('M) effect pure */
-/* val SInt : forall Nat 'N, Nat 'M, Nat 'K, 'M = 'N + -1, 'K = 2**'M. bits('N) -> [|'K * -1:'K + -1|] effect pure */
-val SInt : forall 'N, 'N > 0. bits('N) -> range(-(2 ^ ('N - 1)), 2 ^ ('N - 1) - 1) effect pure
-val HighestSetBit : forall 'N, 'N >= 0. bits('N) -> option(range(0,'N - 1)) effect pure
-val CountLeadingZeroBits : forall 'N, 'N >= 0. bits('N) -> range(0,'N) effect pure
-val IsSecure : unit -> boolean effect {escape,rreg}
-val IsSecureBelowEL3 : unit -> boolean effect {escape,rreg}
-val SCR_GEN : unit -> SCRType effect {escape,rreg}
-val UsingAArch32 : unit -> boolean effect pure
-val ELUsingAArch32 : bits(2) -> boolean effect pure
-val Halted : unit -> boolean effect {rreg}
-val HaveEL : bits(2) -> boolean effect {escape}
-val HaveAnyAArch32 : unit -> boolean effect pure
-val HighestELUsingAArch32 : unit -> boolean effect pure
-val Hint_Branch : BranchType -> unit effect pure
+val ASR_C : forall 'N 'S, 'N >= 1 & 'S >= 1. (bits('N),int('S)) -> (bits('N), bit)
+val LSL_C : forall 'N 'S, 'N >= 0 & 'S >= 1. (bits('N),int('S)) -> (bits('N), bit)
+val LSR_C : forall 'N 'S, 'N >= 1 & 'S >= 1. (bits('N),int('S)) -> (bits('N), bit)
+val ROR_C : forall 'N 'S, 'N >= 1 & 'S != 0. (bits('N),int('S)) -> (bits('N), bit)
+val IsZero : forall 'N, 'N >=0. bits('N) -> boolean
+val Replicate : forall 'N 'M, 'N >='M & 'M >=0. (implicit('N),bits('M)) -> bits('N)
+val SignExtend : forall 'N 'M, 'N > 'M & 'M >= 1. (implicit('N),bits('M)) -> bits('N)
+val ZeroExtend : forall 'N 'M, 'N >= 'M & 'M >= 0. (implicit('N),bits('M)) -> bits('N)
+val Zeros : forall 'N, 'N >=0. implicit('N) -> bits('N)
+val Ones : forall 'N, 'N >=1. implicit('N) -> bits('N)
+/* val UInt : forall Nat 'N, Nat 'M, 'M = 2**'N. bits('N) -> [|'M + -1|] */
+val UInt : forall 'N, 'N >=0 . bits('N) -> range(0, 2 ^ 'N + -1)
+/* val UInt : forall 'N 'M, 'N >=0 & 'M >= 0. bits('N) -> Int('M) */
+/* val SInt : forall Nat 'N, Nat 'M, Nat 'K, 'M = 'N + -1, 'K = 2**'M. bits('N) -> [|'K * -1:'K + -1|] */
+val SInt : forall 'N, 'N > 0. bits('N) -> range(-(2 ^ ('N - 1)), 2 ^ ('N - 1) - 1)
+val HighestSetBit : forall 'N, 'N >= 0. bits('N) -> option(range(0,'N - 1))
+val CountLeadingZeroBits : forall 'N, 'N >= 0. bits('N) -> range(0,'N)
+val IsSecure : unit -> boolean
+val IsSecureBelowEL3 : unit -> boolean
+val SCR_GEN : unit -> SCRType
+val UsingAArch32 : unit -> boolean
+val ELUsingAArch32 : bits(2) -> boolean
+val Halted : unit -> boolean
+val HaveEL : bits(2) -> boolean
+val HaveAnyAArch32 : unit -> boolean
+val HighestELUsingAArch32 : unit -> boolean
+val Hint_Branch : BranchType -> unit
 
 /*************************************************************************/
 /*** AArch64 lib ***/
@@ -195,22 +195,22 @@ enum DCOp = {IVAC, ISW, CSW, CISW, ZVA, CVAC, CVAU, CIVAC}
 enum ICOp = {IALLUIS, IALLU, IVAU}
 
 
-val rPC : unit -> bits(64) effect {rreg}
-val rSP : forall 'N, 'N in {8,16,32,64}. implicit('N) -> bits('N) effect {rreg,escape}
-val wX : forall 'N, 'N in {8,16,32,64}. (reg_index,bits('N)) -> unit effect {wreg}
-val rX : forall 'N, 'N in {8,16,32,64}. (implicit('N),reg_index) -> bits('N) effect {rreg}
-val wV : forall 'N, 'N in {8,16,32,64,128}. (SIMD_index,bits('N)) -> unit effect {wreg}
-val rV : forall 'N, 'N in {8,16,32,64,128}. (implicit('N),SIMD_index) -> bits('N) effect {rreg}
-val rVpart : forall 'N, 'N in {8,16,32,64,128}. (implicit('N),SIMD_index,range(0,1)) -> bits('N) effect {rreg,escape}
-val SCTLR' : unit -> SCTLR_type effect {rreg,escape}
-val AArch64_UndefinedFault : unit -> unit effect {escape}
-val AArch64_TranslateAddress : (bits(64),AccType,boolean,boolean,uinteger) -> AddressDescriptor effect pure
-val AArch64_WFxTrap : (bits(2),boolean) -> unit effect {escape}
-val AArch64_AlignmentFault : (AccType,boolean,boolean) -> FaultRecord effect pure
-val AArch64_ResetGeneralRegisters : unit -> unit effect {wreg}
-val AArch64_ResetSIMDFPRegisters : unit -> unit effect {wreg}
-val AArch64_ResetSpecialRegisters : unit -> unit effect {wreg,escape}
-val AArch64_IsExclusiveVA : (bits(64),integer,uinteger) -> boolean effect pure
+val rPC : unit -> bits(64)
+val rSP : forall 'N, 'N in {8,16,32,64}. implicit('N) -> bits('N)
+val wX : forall 'N, 'N in {8,16,32,64}. (reg_index,bits('N)) -> unit
+val rX : forall 'N, 'N in {8,16,32,64}. (implicit('N),reg_index) -> bits('N)
+val wV : forall 'N, 'N in {8,16,32,64,128}. (SIMD_index,bits('N)) -> unit
+val rV : forall 'N, 'N in {8,16,32,64,128}. (implicit('N),SIMD_index) -> bits('N)
+val rVpart : forall 'N, 'N in {8,16,32,64,128}. (implicit('N),SIMD_index,range(0,1)) -> bits('N)
+val SCTLR' : unit -> SCTLR_type
+val AArch64_UndefinedFault : unit -> unit
+val AArch64_TranslateAddress : (bits(64),AccType,boolean,boolean,uinteger) -> AddressDescriptor
+val AArch64_WFxTrap : (bits(2),boolean) -> unit
+val AArch64_AlignmentFault : (AccType,boolean,boolean) -> FaultRecord
+val AArch64_ResetGeneralRegisters : unit -> unit
+val AArch64_ResetSIMDFPRegisters : unit -> unit
+val AArch64_ResetSpecialRegisters : unit -> unit
+val AArch64_IsExclusiveVA : (bits(64),integer,uinteger) -> boolean
 
 /*************************************************************************/
 /*** AArch32 lib ***/

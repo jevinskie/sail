@@ -77,7 +77,7 @@ union ast =  {
   LogicalShiftedRegister : {'R, RegisterSize('R). (reg_index,reg_index,reg_index,int('R),boolean,LogicalOp,ShiftType,range(0,63),boolean)},
 }
 
-val execute : ast -> unit effect {rreg,wreg,rmem,barr,eamem,wmv,exmem,escape}
+val execute : ast -> unit
 scattered function execute
 
 /* TSTART - dummy decoding */
@@ -91,23 +91,23 @@ function decodeTMStart (Rt) = {
 function clause execute (TMStart(t)) = {
   nesting : bits(8) = TxNestingLevel;
 
-  if nesting <_u TXIDR_EL0.DEPTH() then {
+  if nesting <_u TXIDR_EL0[DEPTH] then {
     TxNestingLevel = nesting + 1;
     status : bits(64) = Zeros();
     if nesting == 0b00000000 then
-      status = TMStartEffect.bits(); /* fake effect */
+      status = TMStartEffect.bits; /* fake effect */
     wX(t) = status;
   } else {
     status : bits(64) = Zeros();
     status[10] = b1; /* set the NEST bit */
-    TMAbortEffect->bits() = status; /* fake effect */
+    TMAbortEffect.bits = status; /* fake effect */
   }
 }
 
-/* external */ val "TMCommitEffect" : unit -> unit effect {barr}
+/* external */ val "TMCommitEffect" : unit -> unit
 
 /* TCOMMIT - dummy decoding */
-val decodeTMCommit : unit -> option(ast) effect pure
+val decodeTMCommit : unit -> option(ast)
 function decodeTMCommit () =
   Some(TMCommit())
 
@@ -125,7 +125,7 @@ function clause execute (TMCommit()) = {
 }
 
 /* TTEST - dummy decoding */
-val decodeTMTest : unit -> option(ast) effect pure 
+val decodeTMTest : unit -> option(ast)
 function decodeTMTest () = 
   Some(TMTest())
 
@@ -139,7 +139,7 @@ function clause execute (TMTest()) = {
 }
 
 /* TABORT - dummy decoding */
-val decodeTMAbort : bits(6) -> option(ast) effect pure 
+val decodeTMAbort : bits(6) -> option(ast)
 function decodeTMAbort ([R] @ (imm5 : bits(5))) = {
   Some(TMAbort(R,imm5));
 }
@@ -151,16 +151,16 @@ function clause execute (TMAbort(retry,reason)) = {
     status[4..0] = reason; /* REASON */
     status[8] = retry; /* RTRY */
     status[9] = b1; /* ABRT */
-    TMAbortEffect->bits() = status; /* fake effect */
+    TMAbortEffect.bits = status; /* fake effect */
   };
 }
 
 /* CBNZ */
 /* CBZ */
-val decodeCompareBranchImmediate : bits(32) -> option(ast) effect {escape}
+val decodeCompareBranchImmediate : bits(32) -> option(ast)
 function decodeCompareBranchImmediate ([sf]@0b011010@[op]@(imm19:bits(19))@(Rt:bits(5))) = {
   t : reg_index = UInt_reg(Rt);
-  datasize : {|32,64|} = if sf == b1 then 64 else 32;
+  datasize : {32,64} = if sf == b1 then 64 else 32;
   iszero : boolean = (op == b0);
   offset : bits(64) = SignExtend(imm19@0b00);
 
@@ -174,7 +174,7 @@ function clause execute (CompareAndBranch((t,(datasize as int('R)),iszero,offset
 }
 
 /* B.cond */
-val decodeConditionalBranchImmediate: bits(32) -> option(ast) effect {escape}
+val decodeConditionalBranchImmediate: bits(32) -> option(ast)
 function decodeConditionalBranchImmediate (0b0101010@0b0@(imm19 : bits(19))@0b0@(_cond : bits(4))) = {
   offset : bits(64) = SignExtend(imm19@0b00);
   condition : bits(4) = _cond;
@@ -188,7 +188,7 @@ function clause execute (BranchConditional(offset,condition)) = {
 }
 
 
-val decodeExceptionGeneration : bits(32) -> option(ast) effect {escape}
+val decodeExceptionGeneration : bits(32) -> option(ast)
 scattered function decodeExceptionGeneration
 
 /* SVC */
@@ -212,7 +212,7 @@ function clause execute (GenerateExceptionEL2(imm)) =
   if ~(HaveEL(EL2)) | PSTATE_EL() == EL0 | (PSTATE_EL() == EL1 & IsSecure()) then
     UnallocatedEncoding();
     /* CP: extracting bit 0 to convert from bitvector length 1 to bit */
-  hvc_enable : bit = if HaveEL(EL3) then (SCR_EL3.HCE())[0] else NOT'(HCR_EL2.HCD()[0]);
+  hvc_enable : bit = if HaveEL(EL3) then (SCR_EL3[HCE])[0] else NOT'(HCR_EL2[HCD][0]);
   if hvc_enable == b0 then
     AArch64_UndefinedFault()
   else
@@ -231,7 +231,7 @@ function clause execute (GenerateExceptionEL3(imm)) = {
 
   AArch64_CheckForSMCTrap(imm);
 
-  if SCR_EL3.SMD() == 0b1 then
+  if SCR_EL3[SMD] == 0b1 then
     /* SMC disabled */
     AArch64_UndefinedFault()
   else
@@ -279,7 +279,7 @@ function clause execute (DebugSwitchToExceptionLevel(target_level)) = {
 
 end decodeExceptionGeneration
 
-val decodeSystem : bits(32) -> option(ast) effect {escape}
+val decodeSystem : bits(32) -> option(ast)
 scattered function decodeSystem
 
 /* MSR (immediate) */
@@ -559,7 +559,7 @@ function clause execute ( MoveSystemRegister(t,sys_op0,sys_op1,sys_op2,sys_crn,s
 
 end decodeSystem
 
-val decodeImplementationDefined : bits(32) -> option(ast) effect pure
+val decodeImplementationDefined : bits(32) -> option(ast)
 scattered function decodeImplementationDefined
 
 /* instructions to signal to Sail that test begins/ends */
@@ -596,11 +596,11 @@ end decodeImplementationDefined
 
 /* TBNZ */
 /* TBZ */
-val decodeTestBranchImmediate : bits(32) -> option(ast) effect {escape}
+val decodeTestBranchImmediate : bits(32) -> option(ast)
 function decodeTestBranchImmediate ([b5]@0b011011@[op]@(b40 : bits(5))@(imm14 : bits(14))@(Rt:bits(5))) = {
   t : reg_index = UInt_reg(Rt);
  
-  let datasize : {| 32, 64 |} /* as int('R) */ = if b5 == b1 then 64 else 32;
+  let datasize : {32, 64} /* as int('R) */ = if b5 == b1 then 64 else 32;
   let bit_pos : uinteger = UInt([b5]@b40);
   bit_val : bit = op;
   offset : bits(64) = SignExtend(imm14@0b00);
@@ -622,7 +622,7 @@ function clause execute ( TestBitAndBranch((t:reg_index,datasize as int('R),bit_
 
 /* B */
 /* BL */
-val decodeUnconditionalBranchImmediate : bits(32) -> option(ast) effect {escape}
+val decodeUnconditionalBranchImmediate : bits(32) -> option(ast)
 function decodeUnconditionalBranchImmediate ([op]@0b00101@(imm26 : bits(26))) = {
   branch_type : BranchType = if op == b1 then BranchType_CALL else BranchType_JMP;
   offset : bits(64) = SignExtend(imm26@0b00);
@@ -637,7 +637,7 @@ function clause execute (BranchImmediate(branch_type,offset)) = {
 }
 
 
-val decodeUnconditionalBranchRegister : bits(32) -> option(ast) effect {escape} 
+val decodeUnconditionalBranchRegister : bits(32) -> option(ast)
 scattered function decodeUnconditionalBranchRegister
 
 /* BLR */
@@ -692,25 +692,25 @@ function clause execute (DebugRestorePState()) = {
 
 end decodeUnconditionalBranchRegister
 
-val decodeAdvSIMDLoadStoreMultiStruct : bits(32) -> option(ast) effect {escape}
+val decodeAdvSIMDLoadStoreMultiStruct : bits(32) -> option(ast)
 function decodeAdvSIMDLoadStoreMultiStruct (machineCode) = {
   not_implemented("decodeAdvSIMDLoadStoreMultiStruct");
   Some(Unallocated());
 }
 
-val decodeAdvSIMDLoadStoreMultiStructPostIndexed : bits(32) -> option(ast) effect {escape}
+val decodeAdvSIMDLoadStoreMultiStructPostIndexed : bits(32) -> option(ast)
 function decodeAdvSIMDLoadStoreMultiStructPostIndexed (machineCode) = {
   not_implemented("decodeAdvSIMDLoadStoreMultiStructPostIndexed");
   Some(Unallocated());
 }
 
-val decodeAdvSIMDLoadStoreSingleStruct : bits(32) -> option(ast) effect {escape}
+val decodeAdvSIMDLoadStoreSingleStruct : bits(32) -> option(ast)
 function decodeAdvSIMDLoadStoreSingleStruct (machineCode) = {
   not_implemented("decodeAdvSIMDLoadStoreSingleStruct");
   Some(Unallocated());
 }
 
-val decodeAdvSIMDLoadStoreSingleStructPostIndexed : bits(32) -> option(ast) effect {escape}
+val decodeAdvSIMDLoadStoreSingleStructPostIndexed : bits(32) -> option(ast)
 function decodeAdvSIMDLoadStoreSingleStructPostIndexed (machineCode) = {
   not_implemented("decodeAdvSIMDLoadStoreSingleStructPostIndexed");
   Some(Unallocated());
@@ -719,12 +719,12 @@ function decodeAdvSIMDLoadStoreSingleStructPostIndexed (machineCode) = {
 /* LDR (literal) opc=0b0_ */
 /* LDRSW (literal) opc=0b10 */
 /* PRFM (literal) opc=0b11 */
-val decodeLoadRegisterLiteral : bits(32) -> option(ast) effect {escape}
+val decodeLoadRegisterLiteral : bits(32) -> option(ast)
 function decodeLoadRegisterLiteral ((opc : bits(2))@0b011@0b0@0b00@(imm19 : bits(19))@(Rt:bits(5))) = {
   t : reg_index = UInt_reg(Rt);
   memop : MemOp = MemOp_LOAD;
   _signed : boolean = false;
-  size : {|4,8|} = 4; /* ARM: uninitialized */
+  size : {4,8} = 4; /* ARM: uninitialized */
   /* offset : bits(64) = Zeros(); /\* ARM: uninitialized *\/ */
 
   match opc {
@@ -793,7 +793,7 @@ function clause execute ( LoadLiteral((t,memop,_signed,size,offset,(datasize as 
 /* STXR   size=0b1_,o2=0,L=0,o1=0,o0=0,                   rt2=(1)(1)(1)(1)(1) */
 /* STXRB  size=0b00,o2=0,L=0,o1=0,o0=0,                   rt2=(1)(1)(1)(1)(1) */
 /* STXRH  size=0b01,o2=0,L=0,o1=0,o0=0,                   rt2=(1)(1)(1)(1)(1) */
-val decodeLoadStoreExclusive : bits(32) -> option(ast) effect {escape}
+val decodeLoadStoreExclusive : bits(32) -> option(ast)
 function decodeLoadStoreExclusive ((size : bits(2))@0b001000@[o2]@[L]@[o1]@(Rs:bits(5))@[o0]@(Rt2:bits(5))@(Rn:bits(5))@(Rt:bits(5))) = {
   let n : reg_index = UInt_reg(Rn);
   let t : reg_index = UInt_reg(Rt);
@@ -994,7 +994,7 @@ function clause execute ( LoadStoreAcqExc((n,t,t2,s,acctype,excl,pair,memop,elsi
 
 /* LDNP */
 /* STNP */
-val decodeLoadStoreNoAllocatePairOffset : bits(32) -> option(ast) effect {escape}
+val decodeLoadStoreNoAllocatePairOffset : bits(32) -> option(ast)
 function decodeLoadStoreNoAllocatePairOffset ((opc : bits(2))@0b101@0b0@0b000@[L]@(imm7 : bits(7))@(Rt2:bits(5))@(Rn:bits(5))@(Rt:bits(5))) = {
   wback : boolean = false;
   postindex : boolean = false;
@@ -1007,8 +1007,8 @@ function decodeLoadStoreNoAllocatePairOffset ((opc : bits(2))@0b101@0b0@0b000@[L
   acctype : AccType = AccType_STREAM;
   memop : MemOp = if L == b1 then MemOp_LOAD else MemOp_STORE;
   if opc[0] == b1 then UnallocatedEncoding();
-  let scale : {| 2, 3 |} = 2 + UInt([opc[1]]);
-  let datasize /* : {| 32,64 |} */  /* as int('D) */ = lsl(8, scale);
+  let scale : {2, 3} = 2 + UInt([opc[1]]);
+  let datasize /* : {32,64} */  /* as int('D) */ = lsl(8, scale);
   assert(datasize == 32 | datasize == 64); /*FIXME: CP adding assertion to make typecheck*/
   offset : bits(64) = LSL(SignExtend(imm7), scale);
 
@@ -1150,7 +1150,7 @@ function sharedDecodeLoadImmediate (opc : bits(2),size : bits(2), Rn : bits(5), 
 /* LDRSB (immediate) post-index */
 /* LDRSH (immediate) post-index */
 /* LDRSW (immediate) post-index */
-val decodeLoadStoreRegisterImmediatePostIndexed : bits(32) -> option(ast) effect {escape}
+val decodeLoadStoreRegisterImmediatePostIndexed : bits(32) -> option(ast)
 function decodeLoadStoreRegisterImmediatePostIndexed ((size:bits(2))@0b111@0b0@0b00@(opc:bits(2))@0b0@(imm9 : bits(9))@0b01@(Rn:bits(5))@(Rt:bits(5))) = {
   wback : boolean = true;
   postindex : boolean = true;
@@ -1264,7 +1264,7 @@ function clause execute ( LoadImmediate ((n,t,acctype,memop,_signed,wback,postin
 /* LDRSB (immediate) pre-index */
 /* LDRSH (immediate) pre-index */
 /* LDRSW (immediate) pre-index */
-val decodeLoadStoreRegisterImmediatePreIndexed : bits(32) -> option(ast) effect {escape}
+val decodeLoadStoreRegisterImmediatePreIndexed : bits(32) -> option(ast)
 function decodeLoadStoreRegisterImmediatePreIndexed ((size:bits(2))@0b111@0b0@0b00@(opc:bits(2))@0b0@(imm9 : bits(9))@0b11@(Rn:bits(5))@(Rt:bits(5))) = {
   wback : boolean = true;
   postindex : boolean = false;
@@ -1314,7 +1314,7 @@ function sharedDecodeLoadRegister(Rn:bits(5), Rt:bits(5), Rm:bits(5), opc : bits
 /* LDRSW (register) */
 /* PRFM (register) */
 
-val decodeLoadStoreRegisterRegisterOffset : bits(32) -> option(ast) effect {escape}
+val decodeLoadStoreRegisterRegisterOffset : bits(32) -> option(ast)
 function decodeLoadStoreRegisterRegisterOffset ((size:bits(2))@0b111@0b0@0b00@(opc:bits(2))@0b1@(Rm:bits(5))@(option_v:bits(3))@[S]@0b10@(Rn:bits(5))@(Rt:bits(5))) = {
   wback : boolean = false;
   postindex : boolean = false;
@@ -1432,7 +1432,7 @@ function clause execute ( LoadRegister((n,t,m,acctype,memop,_signed,wback,postin
 /* LDTRSH */
 /* LDTRSW */
 
-val decodeLoadStoreRegisterUnprivileged : bits(32) -> option(ast) effect {escape}
+val decodeLoadStoreRegisterUnprivileged : bits(32) -> option(ast)
 function decodeLoadStoreRegisterUnprivileged ((size:bits(2))@0b111@0b0@0b00@(opc:bits(2))@0b0@(imm9 : bits(9))@0b10@(Rn:bits(5))@(Rt:bits(5))) = {
   wback : boolean = false;
   postindex : boolean = false;
@@ -1449,7 +1449,7 @@ function decodeLoadStoreRegisterUnprivileged ((size:bits(2))@0b111@0b0@0b00@(opc
 /* LDURSH */
 /* LDURSW */
 /* PRFUM */
-val decodeLoadStoreRegisterUnscaledImmediate : bits(32) -> option(ast) effect {escape}
+val decodeLoadStoreRegisterUnscaledImmediate : bits(32) -> option(ast)
 function decodeLoadStoreRegisterUnscaledImmediate ((size:bits(2))@0b111@0b0@0b00@(opc:bits(2))@0b0@(imm9 : bits(9))@0b00@(Rn:bits(5))@(Rt:bits(5))) = {
   wback : boolean = false;
   postindex : boolean = false;
@@ -1466,7 +1466,7 @@ function decodeLoadStoreRegisterUnscaledImmediate ((size:bits(2))@0b111@0b0@0b00
 /* LDRSH (immediate) Unsigned offset */
 /* LDRSW (immediate) Unsigned offset */
 /* PRFM (immediate) Unsigned offset */
-val decodeLoadStoreRegisterUnsignedImmediate : bits(32) -> option(ast) effect {escape}
+val decodeLoadStoreRegisterUnsignedImmediate : bits(32) -> option(ast)
 function decodeLoadStoreRegisterUnsignedImmediate ((size:bits(2))@0b111@0b0@0b01@(opc:bits(2))@(imm12 : bits(12))@(Rn:bits(5))@(Rt:bits(5))) = {
   wback : boolean = false;
   postindex : boolean = false;
@@ -1495,7 +1495,7 @@ function sharedDecodeLoadStorePair (L:boolean,opc : bits(2),imm7:bits(7),Rn:bits
 /* LDP signed offset */
 /* LDPSW signed offset */
 /* STP signed offset */
-val decodeLoadStoreRegisterPairOffset : bits(32) -> option(ast) effect {escape}
+val decodeLoadStoreRegisterPairOffset : bits(32) -> option(ast)
 function decodeLoadStoreRegisterPairOffset (opc:bits(2)@0b101@0b0@0b010@[L]@(imm7 : bits(7))@(Rt2:bits(5))@(Rn:bits(5))@(Rt:bits(5))) = {
   wback : boolean = false;
   postindex : boolean = false;
@@ -1624,7 +1624,7 @@ function clause execute ( LoadStorePair((wback,postindex,n,t,t2,acctype,memop,_s
 /* LDP post-index */
 /* LDPSW post-index */
 /* STP post-index */
-val decodeLoadStoreRegisterPairPostIndexed : bits(32) -> option(ast) effect {escape}
+val decodeLoadStoreRegisterPairPostIndexed : bits(32) -> option(ast)
 function decodeLoadStoreRegisterPairPostIndexed ((opc:bits(2))@0b101@0b0@0b001@[L]@(imm7 : bits(7))@(Rt2:bits(5))@(Rn:bits(5))@(Rt:bits(5))) = {
   wback : boolean = true;
   postindex : boolean = true;
@@ -1635,7 +1635,7 @@ function decodeLoadStoreRegisterPairPostIndexed ((opc:bits(2))@0b101@0b0@0b001@[
 /* LDP pre-index */
 /* LDPSW pre-index */
 /* STP pre-index */
-val decodeLoadStoreRegisterPairPreIndexed : bits(32) -> option(ast) effect {escape}
+val decodeLoadStoreRegisterPairPreIndexed : bits(32) -> option(ast)
 function decodeLoadStoreRegisterPairPreIndexed ((opc:bits(2))@0b101@0b0@0b011@[L]@(imm7 : bits(7))@(Rt2:bits(5))@(Rn:bits(5))@(Rt:bits(5))) = {
   wback : boolean = true;
   postindex : boolean = false;
@@ -1645,11 +1645,11 @@ function decodeLoadStoreRegisterPairPreIndexed ((opc:bits(2))@0b101@0b0@0b011@[L
 
 /* ADD/ADDS (immediate) */
 /* SUB/SUBS (immediate) */
-val decodeAddSubtractImmediate : bits(32) -> option(ast) effect {escape}
+val decodeAddSubtractImmediate : bits(32) -> option(ast)
 function decodeAddSubtractImmediate ([sf]@[op]@[S]@0b10001@(shift:bits(2))@(imm12 : bits(12))@(Rn:bits(5))@(Rd:bits(5))) = {
   d : (reg_index) = UInt_reg(Rd);
   n : (reg_index) = UInt_reg(Rn);
-  let datasize : {| 32,64 |} = if sf == b1 then 64 else 32;
+  let datasize : {32,64} = if sf == b1 then 64 else 32;
   sub_op : (boolean) = (op == b1);
   setflags : (boolean) = (S == b1);
   imm /* : (bits('R)) */ = Zeros(datasize); /* ARM: uninitialized */
@@ -1690,11 +1690,11 @@ function clause execute (AddSubImmediate((d,n,datasize as int('R),sub_op,setflag
 /* BFM */ 
 /* SBFM */
 /* UBFM */
-val decodeBitfield : bits(32) -> option(ast) effect {escape}
+val decodeBitfield : bits(32) -> option(ast)
 function decodeBitfield ([sf]@(opc:bits(2))@0b100110@[N]@(immr : bits(6))@(imms : bits(6))@(Rn:bits(5))@(Rd:bits(5))) = {
   d : (reg_index) = UInt_reg(Rd);
   n : (reg_index) = UInt_reg(Rn);
-  let datasize : {|32,64|} = if sf == b1 then 64 else 32;
+  let datasize : {32,64} = if sf == b1 then 64 else 32;
   /* let datasize as int('R) = datasize; */
 
   inzero : (boolean) = false; /* ARM: uninitialized */
@@ -1739,12 +1739,12 @@ function clause execute (BitfieldMove((d,n,(datasize as int('R)),inzero,extend,R
 }
 
 /* EXTR */
-val decodeExtract : bits(32) -> option(ast) effect {escape}
+val decodeExtract : bits(32) -> option(ast)
 function decodeExtract ([sf]@0b00@0b100111@[N]@0b0@(Rm:bits(5))@(imms : bits(6))@(Rn:bits(5))@(Rd:bits(5))) = {
   d : (reg_index) = UInt_reg(Rd);
   n : (reg_index) = UInt_reg(Rn);
   m : (reg_index) = UInt_reg(Rm);
-  let datasize : {| 32,64 |} = if sf == b1 then 64 else 32;
+  let datasize : {32,64} = if sf == b1 then 64 else 32;
   lsb : range(0,63) = 0; /* ARM: uninitialized */
 
   if N != sf then UnallocatedEncoding();
@@ -1768,11 +1768,11 @@ function clause execute ( ExtractRegister((d,n,m,datasize as int('R),lsb)) ) = {
 /* AND/ANDS (immediate) */
 /* EOR (immediate) */
 /* ORR (immediate) */
-val decodeLogicalImmediate : bits(32) -> option(ast) effect {escape}
+val decodeLogicalImmediate : bits(32) -> option(ast)
 function decodeLogicalImmediate ([sf]@(opc:bits(2))@0b100100@[N]@(immr : bits(6))@(imms : bits(6))@(Rn:bits(5))@(Rd:bits(5))) = {
   d : (reg_index) = UInt_reg(Rd);
   n : (reg_index) = UInt_reg(Rn);
-  let datasize : {|32,64|} /* int('R) */ = if sf == b1 then 64 else 32;
+  let datasize : {32,64} /* int('R) */ = if sf == b1 then 64 else 32;
   setflags : (boolean) = false; /* ARM: uninitialized */
   op : (LogicalOp) = LogicalOp_AND; /* ARM: uninitialized */
   match opc {
@@ -1811,10 +1811,10 @@ function clause execute (LogicalImmediate((d,n,datasize as int('R),setflags,op,i
 /* MOVK */
 /* MOVN */
 /* MOVZ */
-val decodeMoveWideImmediate : bits(32) -> option(ast) effect {escape}
+val decodeMoveWideImmediate : bits(32) -> option(ast)
 function decodeMoveWideImmediate ([sf]@(opc:bits(2))@0b100101@(hw : bits(2))@(imm16 : bits(16))@(Rd:bits(5))) = {
   d : (reg_index) = UInt_reg(Rd);
-  let datasize : {|32,64|} /* : int('R) */ = if sf == b1 then 64 else 32;
+  let datasize : {32,64} /* : int('R) */ = if sf == b1 then 64 else 32;
   imm : (bits(16)) = imm16;
   pos : (uinteger) = 0; /* ARM: uninitialized */
   opcode : (MoveWideOp) = MoveWideOp_N; /* ARM: uninitialized */
@@ -1849,7 +1849,7 @@ function clause execute ( MoveWide((d,datasize as int('R),imm,pos,opcode)) ) = {
 
 /* ADR */
 /* ADRP */
-val decodePCRelAddressing : bits(32) -> option(ast) effect {escape}
+val decodePCRelAddressing : bits(32) -> option(ast)
 function decodePCRelAddressing ([op]@(immlo : bits(2))@0b10000@(immhi : bits(19))@(Rd:bits(5))) = {
   d : (reg_index) = UInt_reg(Rd);
   page : (boolean) = (op == b1);
@@ -1874,12 +1874,12 @@ function clause execute (Address(d,page,imm)) = {
 
 /* ADD/ADDS (extended register) */
 /* SUB/SUBS (extended register) */
-val decodeAddSubtractExtendedRegister : bits(32) -> option(ast) effect {escape}
+val decodeAddSubtractExtendedRegister : bits(32) -> option(ast)
 function decodeAddSubtractExtendedRegister ([sf]@[op]@[S]@0b01011@0b00@0b1@(Rm:bits(5))@(option_v:bits(3))@(imm3 : bits(3))@(Rn:bits(5))@(Rd:bits(5))) = {
   d : (reg_index) = UInt_reg(Rd);
   n : (reg_index) = UInt_reg(Rn);
   m : (reg_index) = UInt_reg(Rm);
-  datasize : {|32,64|} /* : int('R) */ = if sf == b1 then 64 else 32;
+  datasize : {32,64} /* : int('R) */ = if sf == b1 then 64 else 32;
   sub_op : (boolean) = (op == b1);
   setflags : (boolean) = (S == b1);
   extend_type : (ExtendType) = DecodeRegExtend(option_v);
@@ -1914,12 +1914,12 @@ function clause execute (AddSubExtendRegister((d,n,m,datasize as int('R),sub_op,
 
 /* ADD/ADDS (shifted register) */
 /* SUB/SUBS (shifted register) */
-val decodeAddSubtractShiftedRegister : bits(32) -> option(ast) effect {escape}
+val decodeAddSubtractShiftedRegister : bits(32) -> option(ast)
 function decodeAddSubtractShiftedRegister ([sf]@[op]@[S]@0b01011@(shift:bits(2))@0b0@(Rm:bits(5))@(imm6 : bits(6))@(Rn:bits(5))@(Rd:bits(5))) = {
   d : (reg_index) = UInt_reg(Rd);
   n : (reg_index) = UInt_reg(Rn);
   m : (reg_index) = UInt_reg(Rm);
-  datasize : {| 32,64 |} /* : int('R) */ = if sf == b1 then 64 else 32;
+  datasize : {32,64} /* : int('R) */ = if sf == b1 then 64 else 32;
   sub_op : (boolean) = (op == b1);
   setflags : (boolean) = (S == b1);
 
@@ -1957,12 +1957,12 @@ function clause execute (AddSubShiftedRegister((d,n,m,(datasize as int('R)),sub_
 /* SBC/SBCS */
 
 
-val decodeAddSubtractWithCarry : bits(32) -> option(ast) effect {escape}
+val decodeAddSubtractWithCarry : bits(32) -> option(ast)
 function decodeAddSubtractWithCarry ([sf]@[op]@[S]@0b11010000@(Rm:bits(5))@0b000000@(Rn:bits(5))@(Rd:bits(5))) = {
   d : (reg_index) = UInt_reg(Rd);
   n : (reg_index) = UInt_reg(Rn);
   m : (reg_index) = UInt_reg(Rm);
-  datasize : {| 32, 64 |} /* (int('R)) */ = if sf == b1 then 64 else 32;
+  datasize : {32,64} /* (int('R)) */ = if sf == b1 then 64 else 32;
   sub_op : (boolean) = (op == b1);
   setflags : (boolean) = (S == b1);
 
@@ -1986,10 +1986,10 @@ function clause execute( AddSubCarry((d,n,m,(datasize as int('R)),sub_op,setflag
 
 /* CCMN (immediate) */
 /* CCMP (immediate) */
-val decodeConditionalCompareImmediate : bits(32) -> option(ast) effect pure
+val decodeConditionalCompareImmediate : bits(32) -> option(ast)
 function decodeConditionalCompareImmediate ([sf]@[op]@0b1@0b11010010@(imm5 : bits(5))@(_cond:bits(4))@0b1@0b0@(Rn:bits(5))@0b0@(nzcv:bits(4))) = {
   n : (reg_index) = UInt_reg(Rn);
-  let datasize : {| 32, 64 |} /* : int('R) */ = if sf == b1 then 64 else 32;
+  let datasize : {32,64} /* : int('R) */ = if sf == b1 then 64 else 32;
   sub_op : boolean = (op == b1);
   condition : bits(4) = _cond;
   flags : bits(4) = nzcv;
@@ -2016,11 +2016,11 @@ function clause execute(ConditionalCompareImmediate((n,datasize as int('R),sub_o
 
 /* CCMN (register) */
 /* CCMP (register) */
-val decodeConditionalCompareRegister : bits(32) -> option(ast) effect pure
+val decodeConditionalCompareRegister : bits(32) -> option(ast)
 function decodeConditionalCompareRegister ([sf]@[op]@0b1@0b11010010@(Rm:bits(5))@ (_cond:bits(4))@0b0@0b0@(Rn:bits(5))@0b0@(nzcv:bits(4))) = {
   n : reg_index = UInt_reg(Rn);
   m : reg_index = UInt_reg(Rm);
-  datasize : {|32,64|} /* : int('R) */ = if sf == b1 then 64 else 32;
+  datasize : {32,64} /* : int('R) */ = if sf == b1 then 64 else 32;
   sub_op : boolean = (op == b1);
   condition : bits(4) = _cond;
   flags : bits(4) = nzcv;
@@ -2048,12 +2048,12 @@ function clause execute (ConditionalCompareRegister((n,m,datasize as int('R),sub
 /* CSINC op=0,o2=1 */
 /* CSINV op=1,o2=0 */
 /* CSNEG op=1,o2=1 */
-val decodeConditionalSelect : bits(32) -> option(ast) effect pure
+val decodeConditionalSelect : bits(32) -> option(ast)
 function decodeConditionalSelect ([sf]@[op]@0b0@0b11010100@(Rm:bits(5))@(_cond:bits(4))@0b0@[o2]@(Rn:bits(5))@(Rd:bits(5))) = {
   d : (reg_index) = UInt_reg(Rd);
   n : (reg_index) = UInt_reg(Rn);
   m : (reg_index) = UInt_reg(Rm);
-  datasize : {|32,64|}/* (int('R)) */ = if sf == b1 then 64 else 32;
+  datasize : {32,64}/* (int('R)) */ = if sf == b1 then 64 else 32;
   condition : (bits(4)) = _cond;
   else_inv : (boolean) = (op == b1);
   else_inc : (boolean) = (o2 == b1);
@@ -2077,7 +2077,7 @@ function clause execute ( ConditionalSelect((d,n,m,datasize as int('R),condition
   wX(d) = result;
 }
 
-val decodeData1Source : bits(32) -> option(ast) effect {escape}
+val decodeData1Source : bits(32) -> option(ast)
 scattered function decodeData1Source
 
 /* RBIT */
@@ -2088,7 +2088,7 @@ function clause decodeData1Source ([sf]@0b1@0b0@0b11010110@0b00000@0b0000@(opc:b
   d : (reg_index) = UInt_reg(Rd);
   n : (reg_index) = UInt_reg(Rn);
 
-  datasize : {|32,64|}/* (int('R)) */ = if sf == b1 then 64 else 32;
+  datasize : {32,64}/* (int('R)) */ = if sf == b1 then 64 else 32;
 
   op : (RevOp) = RevOp_RBIT; /* ARM: uninitialized */
   match opc {
@@ -2146,7 +2146,7 @@ function clause execute ( Reverse((d,n,datasize as int('R),op)) ) = {
 function clause decodeData1Source ([sf]@0b1@0b0@0b11010110@0b00000@0b00010@[op]@(Rn:bits(5))@(Rd:bits(5))) = {
   d : (reg_index) = UInt_reg(Rd);
   n : (reg_index) = UInt_reg(Rn);
-  datasize : {| 32,64 |} /* (int('R)) */ = if sf == b1 then 64 else 32;
+  datasize : {32,64} /* (int('R)) */ = if sf == b1 then 64 else 32;
   opcode : (CountOp) = if op == b0 then CountOp_CLZ else CountOp_CLS;
 
   Some(CountLeading(d,n,datasize,opcode));
@@ -2166,7 +2166,7 @@ function clause execute (CountLeading((d,n,datasize as int('R),opcode))) = {
 
 end decodeData1Source
 
-val decodeData2Source : bits(32) -> option(ast) effect {escape}
+val decodeData2Source : bits(32) -> option(ast)
 scattered function decodeData2Source
 
 /* SDIV o1=1 */
@@ -2175,7 +2175,7 @@ function clause decodeData2Source ([sf]@0b0@0b0@0b11010110@(Rm:bits(5))@0b00001@
   d : (reg_index) = UInt_reg(Rd);
   n : (reg_index) = UInt_reg(Rn);
   m : (reg_index) = UInt_reg(Rm);
-  datasize : {| 32, 64 |} /* (int('R)) */ = if sf == b1 then 64 else 32;
+  datasize : {32,64} /* (int('R)) */ = if sf == b1 then 64 else 32;
   _unsigned : (boolean) = (o1 == b0);
 
   Some(Division(d,n,m,datasize,_unsigned));
@@ -2202,7 +2202,7 @@ function clause decodeData2Source ([sf]@0b0@0b0@0b11010110@(Rm:bits(5))@0b0010@(
   d : (reg_index) = UInt_reg(Rd);
   n : (reg_index) = UInt_reg(Rn);
   m : (reg_index) = UInt_reg(Rm);
-  datasize : {| 32, 64 |} /* (int('R)) */ = if sf == b1 then 64 else 32;
+  datasize : {32,64} /* (int('R)) */ = if sf == b1 then 64 else 32;
   shift_type : (ShiftType) = DecodeShift(op2);
 
   Some(Shift(d,n,m,datasize,shift_type));
@@ -2224,7 +2224,7 @@ function clause decodeData2Source ([sf]@0b0@0b0@0b11010110@(Rm:bits(5))@0b010@[C
   m : (reg_index) = UInt_reg(Rm);
   if sf == b1 & sz != 0b11 then UnallocatedEncoding();
   if sf == b0 & sz == 0b11 then UnallocatedEncoding();
-  let size /* : {| 8,16,32,64 |} */ /* (int('D)) */ = lsl(8, UInt(sz)); /* 2-bit size field -> 8, 16, 32, 64 */
+  let size /* : {8,16,32,64} */ /* (int('D)) */ = lsl(8, UInt(sz)); /* 2-bit size field -> 8, 16, 32, 64 */
   assert (size == 8 | size == 16 | size == 32 | size == 64); /*FIXME: CP adding assertion to make typecheck*/
   crc32c : (boolean) = (C == b1);
 
@@ -2248,7 +2248,7 @@ function clause execute ( CRC((d,n,m,(size as int('D)),crc32c)) ) = {
 
 end decodeData2Source
 
-val decodeData3Source : bits(32) -> option(ast) effect pure
+val decodeData3Source : bits(32) -> option(ast)
 scattered function decodeData3Source
 
 /* MADD o0=0 */
@@ -2345,12 +2345,12 @@ end decodeData3Source
 /* ORN (shifted register) */
 /* ORR (shifted register) */
 /* BIC/BICS (shifted register) */
-val decodeLogicalShiftedRegister : bits(32) -> option(ast) effect {escape}
+val decodeLogicalShiftedRegister : bits(32) -> option(ast)
 function decodeLogicalShiftedRegister ([sf]@(opc:bits(2))@0b01010@(shift:bits(2))@[N]@(Rm:bits(5))@(imm6 : bits(6))@(Rn:bits(5))@(Rd:bits(5))) = {
   d : (reg_index) = UInt_reg(Rd);
   n : (reg_index) = UInt_reg(Rn);
   m : (reg_index) = UInt_reg(Rm);
-  datasize : {| 32,64 |} /* : (int('R)) */ = if sf == b1 then 64 else 32;
+  datasize : {32,64} /* : (int('R)) */ = if sf == b1 then 64 else 32;
   setflags : (boolean) = false; /* ARM: uninitialized */
   op : (LogicalOp) = LogicalOp_AND; /* ARM: uninitialized */
   match opc {
@@ -2389,19 +2389,19 @@ function clause execute (LogicalShiftedRegister((d,n,m,datasize as int('R),setfl
   wX(d) = result;
 }
 
-val decodeDataSIMDFPoint1 : bits(32) -> option(ast) effect {escape}
+val decodeDataSIMDFPoint1 : bits(32) -> option(ast)
 function decodeDataSIMDFPoint1 (machineCode) = {
   not_implemented("decodeDataSIMDFPoint1");
   Some(Unallocated());
 }
 
-val decodeDataSIMDFPoint2 : bits(32) -> option(ast) effect {escape}
+val decodeDataSIMDFPoint2 : bits(32) -> option(ast)
 function decodeDataSIMDFPoint2 ( machineCode) = {
   not_implemented("decodeDataSIMDFPoint2");
   Some(Unallocated());
 }
 
-val decodeDataRegister : bits(32) -> option(ast) effect {escape}
+val decodeDataRegister : bits(32) -> option(ast)
 function decodeDataRegister (machineCode) = {
   match machineCode {
     ([_]@[_]@[_]@0b0@ 0b1@0b0@0b1@0b0@ [_]@[_]@[_]@ (_ : bits(9)) @[_]@(_ : bits(11)))  => decodeLogicalShiftedRegister(machineCode),
@@ -2417,7 +2417,7 @@ function decodeDataRegister (machineCode) = {
   }
 }
 
-val decodeDataImmediate : bits(32) -> option(ast) effect {escape}
+val decodeDataImmediate : bits(32) -> option(ast)
 function decodeDataImmediate (machineCode) = {
   match machineCode {
     ((_ : bits(3))@0b1@0b0@0b0@0b0@0b0@[_]@(_ : bits(23)))  => decodePCRelAddressing(machineCode),
@@ -2429,7 +2429,7 @@ function decodeDataImmediate (machineCode) = {
   }
 }
 
-val decodeLoadsStores : bits(32) -> option(ast) effect {escape}
+val decodeLoadsStores : bits(32) -> option(ast)
 function decodeLoadsStores (machineCode) = {
   match machineCode {
     ([_]@[_]@0b0@0b0@ 0b1@0b0@0b0@0b0@ [_]@[_]@[_]@[_]@ [_]@[_]@[_]@[_]@ (_ : bits(4)) @[_]@[_]@ (_ : bits(10)) )  => decodeLoadStoreExclusive(machineCode),
@@ -2451,7 +2451,7 @@ function decodeLoadsStores (machineCode) = {
   }
 }
 
-val decodeSystemImplementationDefined : bits(32) -> option(ast) effect {escape}
+val decodeSystemImplementationDefined : bits(32) -> option(ast)
 function decodeSystemImplementationDefined (machineCode) = {
   match machineCode {
     ((_ : bits(11)) @0b0@0b1@[_]@[_]@[_]@0b1@[_]@0b1@0b1@(_ : bits(12)))  => decodeImplementationDefined(machineCode),
@@ -2461,7 +2461,7 @@ function decodeSystemImplementationDefined (machineCode) = {
 }
 
 
-val decodeBranchesExceptionSystem : bits(32) -> option(ast) effect {escape}
+val decodeBranchesExceptionSystem : bits(32) -> option(ast)
 function decodeBranchesExceptionSystem (machineCode) = {
   match machineCode {
     ([_]@0b0@0b0@0b1@0b0@0b1@[_]@[_]@[_]@[_]@(_ : bits(22)))  => decodeUnconditionalBranchImmediate(machineCode),
@@ -2474,7 +2474,7 @@ function decodeBranchesExceptionSystem (machineCode) = {
   }
 }
 
-val decode : bits(32) -> option(ast) effect {escape}
+val decode : bits(32) -> option(ast)
 function decode (machineCode) = {
   match machineCode {
     ((_ : bits(3)) @0b0@0b0@[_]@[_]@(_ : bits(25)))  => Some(Unallocated()),
@@ -2490,7 +2490,7 @@ function decode (machineCode) = {
     
 end execute
 
-val supported_instructions : ast -> option(ast) effect {escape}
+val supported_instructions : ast -> option(ast)
 function supported_instructions (instr) = {
   match instr {
     Unallocated () => None (),

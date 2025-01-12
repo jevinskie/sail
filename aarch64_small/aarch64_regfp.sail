@@ -11,7 +11,7 @@
 /*  SPDX-License-Identifier: BSD-2-Clause                                 */
 /*========================================================================*/
 
-val rmem_kind : (AccType, bool) -> instruction_kind effect {escape}
+val rmem_kind : (AccType, bool) -> instruction_kind
 function rmem_kind (acctype, exclusive) =
   if exclusive then
     match acctype {

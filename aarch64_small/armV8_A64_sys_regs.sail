@@ -271,6 +271,6 @@ bitfield TXIDR_EL0_type : bits(64) =
 register TXIDR_EL0 : TXIDR_EL0_type /* Transaction ID Register */
 
 
-val AArch64_ResetControlRegisters : boolean -> unit effect pure
+val AArch64_ResetControlRegisters : boolean -> unit
 function AArch64_ResetControlRegisters(cold_reset) = ()
 

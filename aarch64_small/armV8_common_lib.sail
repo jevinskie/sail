@@ -15,11 +15,11 @@
 /** FUNCTION:shared/functions/system/Unreachable */
 
 /* CP: adding two variants, one that takes a string argument, the other one doesn't  */
-val Unreachable_no_message : forall ('a : Type) . unit -> 'a effect{escape}
+val Unreachable_no_message : forall ('a : Type) . unit -> 'a
 function Unreachable_no_message() = 
     error("Unreachable reached")
 
-val Unreachable_message : forall ('a : Type) . string -> 'a effect{escape}
+val Unreachable_message : forall ('a : Type) . string -> 'a
 function Unreachable_message(message) = 
     error(message)
 
@@ -27,11 +27,11 @@ overload Unreachable = {Unreachable_no_message, Unreachable_message}
 
 /** FUNCTION:shared/debug/DoubleLockStatus/DoubleLockStatus */
 
-function DoubleLockStatus() -> boolean= {
+function DoubleLockStatus() -> bool= {
   if ELUsingAArch32(EL1) then
-    (DBGOSDLR.DLK() == 0b1 & DBGPRCR.CORENPDRQ() == 0b0 & ~(Halted()))
+    (DBGOSDLR[DLK] && DBGPRCR[CORENPDRQ] && (Halted() == false))
   else
-    (OSDLR_EL1.DLK() == 0b1 & DBGPRCR_EL1.CORENPDRQ() == 0b0 & ~(Halted()));
+    (OSDLR_EL1[DLK] && DBGPRCR_EL1[CORENPDRQ] && (Halted() == false));
 }
 
 /** FUNCTION:shared/debug/authentication/Debug_authentication */
@@ -99,7 +99,7 @@ function Halt(reason : bits(6)) -> unit= {
 /** FUNCTION:shared/debug/halting/Halted */
 
 function Halted() -> boolean = {
-  ~(EDSCR.STATUS() == 0b000001 | EDSCR.STATUS() == 0b000010); /* Halted */
+  ~(EDSCR[STATUS] == 0b000001 | EDSCR[STATUS] == 0b000010); /* Halted */
 }
 
 /** FUNCTION:shared/debug/halting/HaltingAllowed */
@@ -159,7 +159,7 @@ function IsFault(addrdesc : AddressDescriptor) ->  boolean= {
 
 /* CP: replacing this with the slightly simpler one below */
 
-val ASR : forall 'N, 'N >= 1. (bits('N), uinteger) -> bits('N) effect {escape}
+val ASR : forall 'N, 'N >= 1. (bits('N), uinteger) -> bits('N)
 function ASR (x, shift) = {
   /*assert shift >= 0;*/
   if shift == 0 then x
@@ -189,7 +189,7 @@ function Align'(x : uinteger, y : uinteger) -> uinteger =
 
 /** FUNCTION:bits(N) Align(bits(N) x, integer y) */
 
-val Align : forall 'N, 'N >= 0. (bits('N), uinteger) -> bits('N) effect {escape}
+val Align : forall 'N, 'N >= 0. (bits('N), uinteger) -> bits('N)
 function Align (x, y) =
     to_bits (Align'(UInt(x), y))
 
@@ -209,7 +209,7 @@ function CountLeadingZeroBits(x) =
   }
 /** FUNCTION:bits(N) Extend(bits(M) x, integer N, boolean unsigned) */
 
-val Extend : forall 'N 'M, 1 <= 'M & 'M < 'N. (implicit('N),bits('M),bit) -> bits('N) effect {escape}
+val Extend : forall 'N 'M, 1 <= 'M & 'M < 'N. (implicit('N),bits('M),bit) -> bits('N)
 function Extend (n, x, _unsigned) =
   if _unsigned then ZeroExtend(n,x) else SignExtend(n,x)
 
@@ -241,7 +241,7 @@ function HighestSetBit(x) = {
 
 /** FUNCTION:integer Int(bits(N) x, boolean unsigned) */
 /* used to be called Int */
-val _Int : forall 'N, 'N >= 1. (bits('N), boolean) -> integer effect {escape}
+val _Int : forall 'N, 'N >= 1. (bits('N), boolean) -> integer
 function _Int (x, _unsigned) = {
   if _unsigned then UInt(x) else SInt(x)
 }
@@ -421,7 +421,7 @@ function HaveCRCExt() -> boolean = IMPLEMENTATION_DEFINED.HaveCRCExt
 
 /** FUNCTION:bits(32) Poly32Mod2(bits(N) data, bits(32) poly) */
 
-val Poly32Mod2 : forall 'N, 'N >= 0. (bits('N), bits(32)) -> bits(32) effect {escape}
+val Poly32Mod2 : forall 'N, 'N >= 0. (bits('N), bits(32)) -> bits(32)
 function Poly32Mod2(data, poly) = {
   result : bits('N) = data;
   let N = (length(data)) in {
@@ -437,7 +437,7 @@ function Poly32Mod2(data, poly) = {
 
 /** FUNCTION:shared/functions/exclusive/ClearExclusiveByAddress */
 
-val ClearExclusiveByAddress : (FullAddress, integer, uinteger) -> unit effect pure
+val ClearExclusiveByAddress : (FullAddress, integer, uinteger) -> unit
 function ClearExclusiveByAddress(paddress, processorid, size) =
 {
   info("The model does not implement the exclusive monitors explicitly.");
@@ -445,7 +445,7 @@ function ClearExclusiveByAddress(paddress, processorid, size) =
 
 /** FUNCTION:shared/functions/exclusive/ClearExclusiveLocal */
 
-val ClearExclusiveLocal : int -> unit effect pure
+val ClearExclusiveLocal : int -> unit
 function ClearExclusiveLocal(processorid) =
 {
   info("The model does not implement the exclusive monitors explicitly.");
@@ -453,7 +453,7 @@ function ClearExclusiveLocal(processorid) =
 
 /** FUNCTION:shared/functions/exclusive/ExclusiveMonitorsStatus */
 
-val ExclusiveMonitorsStatus : unit -> bit effect {escape}
+val ExclusiveMonitorsStatus : unit -> bit
 function ExclusiveMonitorsStatus() =
 {
   info("The model does not implement the exclusive monitors explicitly.");
@@ -463,7 +463,7 @@ function ExclusiveMonitorsStatus() =
 
 /** FUNCTION:shared/functions/exclusive/IsExclusiveGlobal */
 
-val IsExclusiveGlobal : (FullAddress, integer, uinteger) -> boolean effect pure
+val IsExclusiveGlobal : (FullAddress, integer, uinteger) -> boolean
 function IsExclusiveGlobal(paddress, processorid, size) = {
   info("The model does not implement the exclusive monitors explicitly.");
   true;
@@ -471,7 +471,7 @@ function IsExclusiveGlobal(paddress, processorid, size) = {
 
 /** FUNCTION:shared/functions/exclusive/IsExclusiveLocal */
 
-val IsExclusiveLocal : (FullAddress, integer, uinteger) -> boolean effect pure
+val IsExclusiveLocal : (FullAddress, integer, uinteger) -> boolean
 function IsExclusiveLocal(paddress, processorid, size) = {
   info("The model does not implement the exclusive monitors explicitly.");
   true;
@@ -479,14 +479,14 @@ function IsExclusiveLocal(paddress, processorid, size) = {
 
 /** FUNCTION:shared/functions/exclusive/MarkExclusiveGlobal */
 
-val MarkExclusiveGlobal : (FullAddress, integer, uinteger) -> unit effect pure
+val MarkExclusiveGlobal : (FullAddress, integer, uinteger) -> unit
 function MarkExclusiveGlobal(paddress, processorid, size) = {
   info("The model does not implement the exclusive monitors explicitly.");
 }
 
 /** FUNCTION:shared/functions/exclusive/MarkExclusiveLocal */
 
-val MarkExclusiveLocal : (FullAddress, integer, uinteger) -> unit effect pure
+val MarkExclusiveLocal : (FullAddress, integer, uinteger) -> unit
 function MarkExclusiveLocal(paddress, processorid, size) = {
   info("The model does not implement the exclusive monitors explicitly.");
 }
@@ -498,7 +498,7 @@ function ProcessorID() -> int = 0
 
 /** FUNCTION:(bits(N), bits(4)) AddWithCarry(bits(N) x, bits(N) y, bit carry_in) */
 
-val AddWithCarry : forall 'N, 'N > 0. (bits('N), bits('N), bit) -> (bits('N), bits(4)) effect {escape}
+val AddWithCarry : forall 'N, 'N > 0. (bits('N), bits('N), bit) -> (bits('N), bits(4))
 function AddWithCarry (x, y, carry_in) = {
   unsigned_sum : uinteger = UInt(x) + UInt(y) + UInt([carry_in]);
   signed_sum : integer = SInt(x) + SInt(y) + UInt([carry_in]);
@@ -514,20 +514,20 @@ function AddWithCarry (x, y, carry_in) = {
 /** TYPE:shared/functions/memory/AddressDescriptor */
 /** FUNCTION:boolean BigEndian() */
 
-val BigEndian : unit -> boolean effect {rreg,escape}
+val BigEndian : unit -> boolean
 function BigEndian() = {
     /* bigend : boolean = b0; /\* ARM: uninitialized *\/ */
     if UsingAArch32() then
         /* bigend =  */(PSTATE_E != 0b0)
     else if PSTATE_EL() == EL0 then
-        /* bigend =  */(SCTLR_EL1.E0E() != 0b0)
+        /* bigend =  */(SCTLR_EL1[E0E] != 0b0)
     else
-        /* bigend =  */((SCTLR'()).EE() != 0b0);
+        /* bigend =  */((SCTLR'())[EE] != 0b0);
     /* bigend; */
 }
 
 /** FUNCTION:shared/functions/memory/BigEndianReverse */
-val BigEndianReverse : forall 'W, 'W in {8,16,32,64,128}. bits('W) -> bits('W) effect pure
+val BigEndianReverse : forall 'W, 'W in {8,16,32,64,128}. bits('W) -> bits('W)
 function BigEndianReverse (value) = {
     let 'half = 'W / 2;
     width : int('W) = length(value);
@@ -542,18 +542,18 @@ function BigEndianReverse (value) = {
 
 /** FUNCTION:shared/functions/memory/DataMemoryBarrier */
 
-/* external */ val DataMemoryBarrier_NonShReads    : unit -> unit effect {barr}
-/* external */ val DataMemoryBarrier_NonShWrites   : unit -> unit effect {barr}
-/* external */ val DataMemoryBarrier_NonShAll      : unit -> unit effect {barr}
-/* external */ val DataMemoryBarrier_InnerShReads  : unit -> unit effect {barr}
-/* external */ val DataMemoryBarrier_InnerShWrites : unit -> unit effect {barr}
-/* external */ val DataMemoryBarrier_InnerShAll    : unit -> unit effect {barr}
-/* external */ val DataMemoryBarrier_OuterShReads  : unit -> unit effect {barr}
-/* external */ val DataMemoryBarrier_OuterShWrites : unit -> unit effect {barr}
-/* external */ val DataMemoryBarrier_OuterShAll    : unit -> unit effect {barr}
-/* external */ val DataMemoryBarrier_FullShReads   : unit -> unit effect {barr}
-/* external */ val DataMemoryBarrier_FullShWrites  : unit -> unit effect {barr}
-/* external */ val DataMemoryBarrier_FullShAll     : unit -> unit effect {barr}
+/* external */ val DataMemoryBarrier_NonShReads    : unit -> unit
+/* external */ val DataMemoryBarrier_NonShWrites   : unit -> unit
+/* external */ val DataMemoryBarrier_NonShAll      : unit -> unit
+/* external */ val DataMemoryBarrier_InnerShReads  : unit -> unit
+/* external */ val DataMemoryBarrier_InnerShWrites : unit -> unit
+/* external */ val DataMemoryBarrier_InnerShAll    : unit -> unit
+/* external */ val DataMemoryBarrier_OuterShReads  : unit -> unit
+/* external */ val DataMemoryBarrier_OuterShWrites : unit -> unit
+/* external */ val DataMemoryBarrier_OuterShAll    : unit -> unit
+/* external */ val DataMemoryBarrier_FullShReads   : unit -> unit
+/* external */ val DataMemoryBarrier_FullShWrites  : unit -> unit
+/* external */ val DataMemoryBarrier_FullShAll     : unit -> unit
 
 function DataMemoryBarrier_NonShReads()    = __barrier(Barrier_DMB (A64_NonShare,   A64_barrier_LD))
 function DataMemoryBarrier_NonShWrites()   = __barrier(Barrier_DMB (A64_NonShare,   A64_barrier_ST))
@@ -568,7 +568,7 @@ function DataMemoryBarrier_FullShReads()   = __barrier(Barrier_DMB (A64_FullShar
 function DataMemoryBarrier_FullShWrites()  = __barrier(Barrier_DMB (A64_FullShare,  A64_barrier_ST))
 function DataMemoryBarrier_FullShAll()     = __barrier(Barrier_DMB (A64_FullShare,  A64_barrier_all))
 
-val DataMemoryBarrier : (MBReqDomain, MBReqTypes) -> unit effect {barr, escape}
+val DataMemoryBarrier : (MBReqDomain, MBReqTypes) -> unit
 function DataMemoryBarrier(domain, types) =
 {
   match (domain, types) {
@@ -592,18 +592,18 @@ function DataMemoryBarrier(domain, types) =
 
 /** FUNCTION:shared/functions/memory/DataSynchronizationBarrier */
 
-/* external */ val DataSynchronizationBarrier_NonShReads    : unit -> unit effect {barr}
-/* external */ val DataSynchronizationBarrier_NonShWrites   : unit -> unit effect {barr}
-/* external */ val DataSynchronizationBarrier_NonShAll      : unit -> unit effect {barr}
-/* external */ val DataSynchronizationBarrier_InnerShReads  : unit -> unit effect {barr}
-/* external */ val DataSynchronizationBarrier_InnerShWrites : unit -> unit effect {barr}
-/* external */ val DataSynchronizationBarrier_InnerShAll    : unit -> unit effect {barr}
-/* external */ val DataSynchronizationBarrier_OuterShReads  : unit -> unit effect {barr}
-/* external */ val DataSynchronizationBarrier_OuterShWrites : unit -> unit effect {barr}
-/* external */ val DataSynchronizationBarrier_OuterShAll    : unit -> unit effect {barr}
-/* external */ val DataSynchronizationBarrier_FullShReads   : unit -> unit effect {barr}
-/* external */ val DataSynchronizationBarrier_FullShWrites  : unit -> unit effect {barr}
-/* external */ val DataSynchronizationBarrier_FullShAll     : unit -> unit effect {barr}
+/* external */ val DataSynchronizationBarrier_NonShReads    : unit -> unit
+/* external */ val DataSynchronizationBarrier_NonShWrites   : unit -> unit
+/* external */ val DataSynchronizationBarrier_NonShAll      : unit -> unit
+/* external */ val DataSynchronizationBarrier_InnerShReads  : unit -> unit
+/* external */ val DataSynchronizationBarrier_InnerShWrites : unit -> unit
+/* external */ val DataSynchronizationBarrier_InnerShAll    : unit -> unit
+/* external */ val DataSynchronizationBarrier_OuterShReads  : unit -> unit
+/* external */ val DataSynchronizationBarrier_OuterShWrites : unit -> unit
+/* external */ val DataSynchronizationBarrier_OuterShAll    : unit -> unit
+/* external */ val DataSynchronizationBarrier_FullShReads   : unit -> unit
+/* external */ val DataSynchronizationBarrier_FullShWrites  : unit -> unit
+/* external */ val DataSynchronizationBarrier_FullShAll     : unit -> unit
 
 function DataSynchronizationBarrier_NonShReads()    = __barrier(Barrier_DSB (A64_NonShare,   A64_barrier_LD))
 function DataSynchronizationBarrier_NonShWrites()   = __barrier(Barrier_DSB (A64_NonShare,   A64_barrier_ST))
@@ -618,7 +618,7 @@ function DataSynchronizationBarrier_FullShReads()   = __barrier(Barrier_DSB (A64
 function DataSynchronizationBarrier_FullShWrites()  = __barrier(Barrier_DSB (A64_FullShare,  A64_barrier_ST))
 function DataSynchronizationBarrier_FullShAll()     = __barrier(Barrier_DSB (A64_FullShare,  A64_barrier_all))
 
-val DataSynchronizationBarrier : (MBReqDomain, MBReqTypes) -> unit effect {barr,escape}
+val DataSynchronizationBarrier : (MBReqDomain, MBReqTypes) -> unit
 function DataSynchronizationBarrier(domain, types) =
 {
   match (domain, types) {
@@ -645,7 +645,7 @@ function DataSynchronizationBarrier(domain, types) =
 /** TYPE:shared/functions/memory/FaultRecord */
 /** TYPE:shared/functions/memory/FullAddress */
 /** FUNCTION:shared/functions/memory/Hint_Prefetch */
-val Hint_Prefetch : (bits(64),PrefetchHint,integer,boolean) -> unit effect pure
+val Hint_Prefetch : (bits(64),PrefetchHint,integer,boolean) -> unit
 function Hint_Prefetch(addr,hint,target,stream) = ()
 /** ENUMERATE:shared/functions/memory/MBReqDomain */
 /** ENUMERATE:shared/functions/memory/MBReqTypes */
@@ -656,19 +656,19 @@ function Hint_Prefetch(addr,hint,target,stream) = ()
 /** FUNCTION:shared/functions/memory/_Mem */
 
 /* regular load */
-/* external */ val rMem_NORMAL : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/,int('N) /*size*/) -> bits('N*8) effect {rmem}
+/* external */ val rMem_NORMAL : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/,int('N) /*size*/) -> bits('N*8)
 function rMem_NORMAL (address, size) = __read_mem(Read_plain, 64, address, size)
 /* non-temporal load (LDNP), see ARM ARM for special exception to normal memory ordering rules */
-/* external */ val rMem_STREAM : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/,int('N) /*size*/) -> bits('N*8) effect {rmem}
+/* external */ val rMem_STREAM : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/,int('N) /*size*/) -> bits('N*8)
 function rMem_STREAM (address, size) = __read_mem(Read_stream, 64, address, size)
 /* load-acquire */
-/* external */ val rMem_ORDERED : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/,int('N) /*size*/) -> bits('N*8) effect {rmem}
+/* external */ val rMem_ORDERED : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/,int('N) /*size*/) -> bits('N*8)
 function rMem_ORDERED (address, size) = __read_mem(Read_acquire, 64, address, size)
 /* load-exclusive */
-/* external */ val rMem_ATOMIC : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/,int('N) /*size*/) -> bits('N*8) effect {rmem}
+/* external */ val rMem_ATOMIC : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/,int('N) /*size*/) -> bits('N*8)
 function rMem_ATOMIC (address, size) = __read_mem(Read_exclusive, 64, address, size)
 /* load-exclusive+acquire */
-/* external */ val rMem_ATOMIC_ORDERED : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/,int('N) /*size*/) -> bits('N*8) effect {rmem}
+/* external */ val rMem_ATOMIC_ORDERED : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/,int('N) /*size*/) -> bits('N*8)
 function rMem_ATOMIC_ORDERED (address, size) = __read_mem(Read_exclusive_acquire, 64, address, size)
 
 struct read_buffer_type = {
@@ -687,7 +687,7 @@ let empty_read_buffer : read_buffer_type =
     address = Zeros()
   }
 
-val _rMem : forall 'N, 'N in {1,2,4,8,16}. (read_buffer_type, AddressDescriptor, int('N), AccType, bool) -> read_buffer_type effect {escape}
+val _rMem : forall 'N, 'N in {1,2,4,8,16}. (read_buffer_type, AddressDescriptor, int('N), AccType, bool) -> read_buffer_type
 function _rMem(read_buffer, desc, size, acctype, exclusive) = {
   if read_buffer.size == 0 then 
     struct { acctype = acctype,
@@ -704,7 +704,7 @@ function _rMem(read_buffer, desc, size, acctype, exclusive) = {
   }
 }
 
-val flush_read_buffer : forall 'N, 'N in {1,2,4,8,16}. (read_buffer_type, int('N)) -> bits('N*8) effect {rmem, rreg, escape}
+val flush_read_buffer : forall 'N, 'N in {1,2,4,8,16}. (read_buffer_type, int('N)) -> bits('N*8)
 function flush_read_buffer(read_buffer, size) =
 {
   assert(read_buffer.size == size);
@@ -737,19 +737,19 @@ function flush_read_buffer(read_buffer, size) =
 /** FUNCTION:_Mem[AddressDescriptor desc, integer size, AccType acctype] = bits(8*size) value; */
 
 /* regular store */
-/* external */ val wMem_Addr_NORMAL : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/, int('N) /*size*/) -> unit effect {eamem}
+/* external */ val wMem_Addr_NORMAL : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/, int('N) /*size*/) -> unit
 function wMem_Addr_NORMAL (address, size) = { __write_mem_ea(Write_plain, 64, address, size); () }
 /* store-release */
-/* external */ val wMem_Addr_ORDERED : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/, int('N) /*size*/) -> unit effect {eamem}
+/* external */ val wMem_Addr_ORDERED : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/, int('N) /*size*/) -> unit
 function wMem_Addr_ORDERED (address, size) = { __write_mem_ea(Write_release, 64, address, size); () }
 /* store-exclusive */
-/* external */ val wMem_Addr_ATOMIC : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/, int('N) /*size*/) -> unit effect {eamem}
+/* external */ val wMem_Addr_ATOMIC : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/, int('N) /*size*/) -> unit
 function wMem_Addr_ATOMIC (address, size) = { __write_mem_ea(Write_exclusive, 64, address, size); () }
 /* store-exclusive+release */
-/* external */ val wMem_Addr_ATOMIC_ORDERED : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/, int('N) /*size*/) -> unit effect {eamem}
+/* external */ val wMem_Addr_ATOMIC_ORDERED : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*address*/, int('N) /*size*/) -> unit
 function wMem_Addr_ATOMIC_ORDERED (address, size) = { __write_mem_ea(Write_exclusive_release, 64, address, size); () }
 
-val wMem_Addr : forall 'N, 'N in {1,2,4,8,16}. (bits(64), int('N), AccType, boolean) -> unit effect {eamem, escape}
+val wMem_Addr : forall 'N, 'N in {1,2,4,8,16}. (bits(64), int('N), AccType, boolean) -> unit
 function wMem_Addr(address, size, acctype, excl) =
 {
   match (excl, acctype) {
@@ -765,14 +765,14 @@ function wMem_Addr(address, size, acctype, excl) =
 
 
 /* regular store */
-/* external */ val wMem_Val_NORMAL : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*addr*/, int('N) /*size*/, bits('N*8) /*value*/) -> unit effect {wmv}
+/* external */ val wMem_Val_NORMAL : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*addr*/, int('N) /*size*/, bits('N*8) /*value*/) -> unit
 function wMem_Val_NORMAL (address, size, value) = { let b = __write_mem(Write_plain, 64, address, size, value); () }
-/* external */ val wMem_Val_ORDERED : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*addr*/, int('N) /*size*/, bits('N*8) /*value*/) -> unit effect {wmv}
+/* external */ val wMem_Val_ORDERED : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*addr*/, int('N) /*size*/, bits('N*8) /*value*/) -> unit
 function wMem_Val_ORDERED (address, size, value) = { let b = __write_mem(Write_release, 64, address, size, value); () }
 /* store-exclusive */
-/* external */ val wMem_Val_ATOMIC : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*addr*/, int('N) /*size*/, bits('N*8) /*value*/) -> bool effect {wmv}
+/* external */ val wMem_Val_ATOMIC : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*addr*/, int('N) /*size*/, bits('N*8) /*value*/) -> bool
 function wMem_Val_ATOMIC (address, size, value) = __write_mem(Write_exclusive, 64, address, size, value)
-/* external */ val wMem_Val_ATOMIC_ORDERED : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*addr*/, int('N) /*size*/, bits('N*8) /*value*/) -> bool effect {wmv}
+/* external */ val wMem_Val_ATOMIC_ORDERED : forall 'N, 'N in {1,2,4,8,16}. (bits(64) /*addr*/, int('N) /*size*/, bits('N*8) /*value*/) -> bool
 function wMem_Val_ATOMIC_ORDERED (address, size, value) = __write_mem(Write_exclusive_release, 64, address, size, value)
 
 
@@ -794,7 +794,7 @@ let empty_write_buffer : write_buffer_type = struct {
   value = Zeros()
 }
 
-val _wMem : forall 'N, 'N in {1,2,4,8,16}. (write_buffer_type, AddressDescriptor, int('N), AccType, bool, bits('N*8)) -> write_buffer_type effect {escape}
+val _wMem : forall 'N, 'N in {1,2,4,8,16}. (write_buffer_type, AddressDescriptor, int('N), AccType, bool, bits('N*8)) -> write_buffer_type
 function _wMem(write_buffer, desc, size, acctype, exclusive, value) = {
   let s = write_buffer.size;
   if s == 0 then {
@@ -816,7 +816,7 @@ function _wMem(write_buffer, desc, size, acctype, exclusive, value) = {
   }
 }
 
-val flush_write_buffer : write_buffer_type -> unit effect {escape, wmv}
+val flush_write_buffer : write_buffer_type -> unit
 function flush_write_buffer(write_buffer) = {
   assert(write_buffer.exclusive == false);
   let s : range(0,16) = write_buffer.size;
@@ -830,7 +830,7 @@ function flush_write_buffer(write_buffer) = {
   };
 }
 
-val flush_write_buffer_exclusive : write_buffer_type -> bool effect {escape, wmv}
+val flush_write_buffer_exclusive : write_buffer_type -> bool
 function flush_write_buffer_exclusive(write_buffer) = {
   assert(write_buffer.exclusive);
   let s = write_buffer.size;
@@ -844,7 +844,7 @@ function flush_write_buffer_exclusive(write_buffer) = {
 
 /** FUNCTION:BranchTo(bits(N) target, BranchType branch_type) */
 
-val BranchTo : forall 'N, 'N in {32,64}. (bits('N), BranchType) -> unit effect {escape, rreg, wreg}
+val BranchTo : forall 'N, 'N in {32,64}. (bits('N), BranchType) -> unit
 function BranchTo(target, branch_type) = {
   target' : bits('N) = target; /* Sail does not let you change parameter vector */
 
@@ -857,23 +857,23 @@ function BranchTo(target, branch_type) = {
     /* Remove the tag bits from tagged target */
     let pstate_el = PSTATE_EL() in {
       if pstate_el == EL0 then {
-        if target'[55] == b1 & TCR_EL1.TBI1() == 0b1 then
+        if target'[55] == b1 & TCR_EL1[TBI1] == 0b1 then
           target'[63..56] = 0b11111111;
-        if target'[55] == b0 & TCR_EL1.TBI0() == 0b1 then
+        if target'[55] == b0 & TCR_EL1[TBI0] == 0b1 then
           target'[63..56] = 0b00000000;
       }
       else if pstate_el == EL1 then {
-        if target'[55] == b1 & TCR_EL1.TBI1() == 0b1 then
+        if target'[55] == b1 & TCR_EL1[TBI1] == 0b1 then
           target'[63..56] = 0b11111111;
-        if target'[55] == b0 & TCR_EL1.TBI0() == 0b1 then
+        if target'[55] == b0 & TCR_EL1[TBI0] == 0b1 then
           target'[63..56] = 0b00000000;
       }
       else if pstate_el == EL2 then {
-        if TCR_EL2.TBI() == 0b1 then
+        if TCR_EL2[TBI] == 0b1 then
           target'[63..56] = 0b00000000;
       }
       else if pstate_el == EL3 then {
-        if TCR_EL3.TBI() == 0b1 then
+        if TCR_EL3[TBI] == 0b1 then
           target'[63..56] = 0b00000000;
       }
       else exit()
@@ -885,18 +885,18 @@ function BranchTo(target, branch_type) = {
 /** ENUMERATE:shared/functions/registers/BranchType */
 /** FUNCTION:shared/functions/registers/Hint_Branch */
 
-val Hint_branch : BranchType -> unit effect pure
+val Hint_branch : BranchType -> unit
 function Hint_Branch(hint) = {
   info("This hint can be used for hardware optimization that has no effect on the model.");
 }
 
 /** FUNCTION:shared/functions/registers/ResetExternalDebugRegisters */
-val ResetExternalDebugRegisters : boolean -> unit effect {escape}
+val ResetExternalDebugRegisters : boolean -> unit
 function ResetExternalDebugRegisters (b) = 
   not_implemented_extern("ResetExternalDebugRegisters")
 /** FUNCTION:shared/functions/registers/ThisInstrAddr */
 
-val ThisInstrAddr : forall 'N, 'N >= 0. implicit('N) -> bits('N) effect {escape,rreg}
+val ThisInstrAddr : forall 'N, 'N >= 0. implicit('N) -> bits('N)
 function ThisInstrAddr(N) = {
   assert(N == 64 | (N == 32 & UsingAArch32()));
   /*return*/ mask(rPC());
@@ -921,9 +921,9 @@ function rSPSR() -> bits(32) = {
     */
   } else {
     let pstate_el = PSTATE_EL() in {
-      if      pstate_el == EL1 then /* result =  */SPSR_EL1.bits()
-      else if pstate_el == EL2 then /* result =  */SPSR_EL2.bits()
-      else if pstate_el == EL3 then /* result =  */SPSR_EL3.bits()
+      if      pstate_el == EL1 then /* result =  */SPSR_EL1.bits
+      else if pstate_el == EL2 then /* result =  */SPSR_EL2.bits
+      else if pstate_el == EL3 then /* result =  */SPSR_EL3.bits
       else {Unreachable(); Zeros()}
     };
   };
@@ -934,7 +934,7 @@ function rSPSR() -> bits(32) = {
 function ClearEventRegister () -> unit = not_implemented_extern("ClearEventRegister")
 /** FUNCTION:boolean ConditionHolds(bits(4) cond) */
 
-val ConditionHolds : bits(4) -> boolean effect {rreg}
+val ConditionHolds : bits(4) -> boolean
 function ConditionHolds(_cond) = {
   result : boolean = false; /* ARM: uninitialized */
   /* Evaluate base condition */
@@ -1016,7 +1016,7 @@ function HighestELUsingAArch32() -> boolean = {
 function Hint_Yield() -> unit = ()
 
 /** FUNCTION:shared/functions/system/InstructionSynchronizationBarrier */
-/* external */ val InstructionSynchronizationBarrier : unit -> unit effect {barr}
+/* external */ val InstructionSynchronizationBarrier : unit -> unit
 function InstructionSynchronizationBarrier () = __barrier(Barrier_ISB())
 /** FUNCTION:shared/functions/system/InterruptPending */
 
@@ -1038,7 +1038,7 @@ function IsSecure() -> boolean = {
 
 function IsSecureBelowEL3() -> boolean = {
   if HaveEL(EL3) then
-    SCR_GEN().NS() == 0b0
+    SCR_GEN()[NS] == 0b0
   else if HaveEL(EL2) then
     false
   else
@@ -1088,7 +1088,7 @@ function WaitForInterrupt () -> unit  = not_implemented_extern("WaitForInterrupt
 
 function PAMax() -> range(32,48) = {
   pa_size : range(32,48) = 32;
-  match ID_AA64MMFR0_EL1.PARange() {
+  match ID_AA64MMFR0_EL1[PARange] {
     0b0000  => pa_size = 32,
     0b0001  => pa_size = 36,
     0b0010  => pa_size = 40,
@@ -1103,7 +1103,7 @@ function PAMax() -> range(32,48) = {
 
 /** FUNCTION:shared/translation/translation/S1TranslationRegime */
 
-val S1TranslationRegime : unit -> bits(2) effect {escape,rreg}
+val S1TranslationRegime : unit -> bits(2)
 function S1TranslationRegime () = {
   if PSTATE_EL() != EL0 then
     PSTATE_EL()
