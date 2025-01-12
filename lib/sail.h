@@ -361,6 +361,8 @@ fbits bitvector_access_inc(const lbits op, const sail_int n_mpz);
 
 fbits update_fbits(const fbits op, const uint64_t n, const fbits bit);
 
+void hex_slice(lbits *rop, const_sail_string hex, const sail_int len_mpz, const sail_int start_mpz);
+
 void sail_unsigned(sail_int *rop, const lbits op);
 void sail_signed(sail_int *rop, const lbits op);
 
