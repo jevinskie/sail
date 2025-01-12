@@ -917,6 +917,13 @@ fbits update_fbits(const fbits op, const uint64_t n, const fbits bit)
      }
 }
 
+void hex_slice(lbits *rop, const_sail_string hex, const sail_int len_mpz, const sail_int start_mpz) {
+  mpz_t op;
+  mpz_init_set_str(op, hex, 0);
+  get_slice_int(rop, len_mpz, op, start_mpz);
+  mpz_clear(op);
+}
+
 void sail_unsigned(sail_int *rop, const lbits op)
 {
   /* Normal form of bv_t is always positive so just return the bits. */
