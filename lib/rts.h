@@ -235,8 +235,8 @@ int process_arguments(int, char**);
 void setup_rts(void);
 void cleanup_rts(void);
 
-unit z__SetConfig(const_sail_string, sail_int);
-unit z__ListConfig(const unit u);
+static unit z__SetConfig(const_sail_string, sail_int);
+static unit z__ListConfig(const unit u);
 
 #ifdef __cplusplus
 }
